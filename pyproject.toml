@@ -1,0 +1,53 @@
+[tool.poetry]
+name = "bd-crossword"
+version = "0.1.0"
+description = "Cryptic Crossword Generator"
+authors = ["chris <chris@gmail.com>"]
+readme = "README.md"
+# packages = [{include = "bd_crossword"}]
+homepage = "https://github.com/<your-username>/bd-crossword"
+repository = "https://github.com/<your-username>/bd-crossword"
+keywords = ["cryptic", "crossword"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+click = "^8.1.3"
+requests = "^2.28.1"
+
+[tool.poetry.scripts]
+index-page-get = "bd_crossword.index_page.console:main"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.1.3"
+coverage = {extras = ["toml"], version = "^6.4.4"}
+pytest-cov = "^3.0.0"
+pytest-mock = "^3.8.2"
+beautifulsoup4 = "^4.11.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "DEBUG"
+log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+
+#log_file = "pytest.log"
+#log_file_level = "DEBUG"
+#log_file_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
+#log_file_date_format = "%Y-%m-%d %H:%M:%S"
+
+
+[tool.coverage.paths]
+source = ["src", "*/site-packages"]
+
+[tool.coverage.run]
+branch = true
+source = ["bd_crossword"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 100
