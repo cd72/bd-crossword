@@ -3,7 +3,7 @@ import requests
 import re
 from datetime import timedelta
 from bs4 import BeautifulSoup
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 logger = logging.getLogger(__name__)
@@ -11,8 +11,10 @@ logger = logging.getLogger(__name__)
 headers = {
     "Connection": "keep-alive",
     "Upgrade-Insecure-Requests": "1",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ("
+    + "KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,i"
+    + "mage/webp,*/*;q=0.8",
     "Accept-Language": "en-GB,en;q=0.5",
     "Accept-Encoding": "gzip, deflate, br",
     "Referer": "https://www.google.com/",
@@ -57,18 +59,6 @@ class IndexEntry:
     difficulty: str
     enjoyment: str
     last_updated: str
-
-
-def get_puzzle_title(soup):
-    puzzle_title = soup.select_one("h1.entry-title").text
-    logger.info(f"Puzzle title is {puzzle_title}")
-    return puzzle_title
-
-
-def get_puzzle_author(soup):
-    puzzle_author = soup.select_one("span.author").text
-    logger.info(f"Puzzle author is {puzzle_author}")
-    return puzzle_author
 
 
 def parse_string_for_difficulty(html_string):
@@ -116,7 +106,7 @@ def convert_stars_to_number(stars):
     elif stars == "****/*****":
         return 4.5
     else:
-        return 999
+        raise (ValueError(f"Invalid stars rating pattern found : {stars}"))
 
 
 def dates_in_range(start_date, days):
@@ -137,7 +127,6 @@ def download_index_for_date(index_date):
 def all_index_entries(soup):
     articles = soup.select("article")
     for article in articles:
-        print("processing article")
         entry_header = article.select_one(".entry-header")
         entry_content = article.select_one(".entry-content")
         entry_footer = article.select_one(".entry-footer")
@@ -145,7 +134,7 @@ def all_index_entries(soup):
         title_element = entry_header.select_one(".entry-title")
         title = title_element.text
 
-        print(f"{title=}")
+        logger.debug("Title : %s", title)
 
         if not title.startswith("DT"):
             continue
@@ -153,27 +142,27 @@ def all_index_entries(soup):
         if "(Hints)" in title:
             continue
 
-        # for subtitle in list(entry_content.select('h2')):
+        subtitles = [
+            subitem
+            for item in entry_content.select("h2")
+            for subitem in item.text.splitlines()
+        ]
+        for subtitle in subtitles:
+            logger.debug("subtitle_text : %s", subtitle)
+
         #    if subtitle.text.startswith('A full review'):
         #        continue
         #    if subtitle.text.startswith('The Saturday Crossword Club'):
         #        continue
 
-        if any(
-            subtitle.text.startswith("The Saturday")
-            for subtitle in entry_content.select("h2")
-        ):
+        if any(subtitle.startswith("The Saturday") for subtitle in subtitles):
             continue
-        print("ok1")
 
-        if not any(
-            subtitle.text.startswith("Hints and tips")
-            for subtitle in entry_content.select("h2")
-        ):
-            print("invalid subtitle")
-            for subtitle in entry_content.select("h2"):
-                print("===" + str(subtitle))
-                print(subtitle.text.startswith("Hints and tips"))
+        if any(subtitle.startswith("A full review") for subtitle in subtitles):
+            continue
+
+        if not any(subtitle.startswith("Hints and tips") for subtitle in subtitles):
+            logger.warning('No subtitle called "Hints and tips" found')
             continue
 
         logger.debug(f"title : {title}")
@@ -183,7 +172,6 @@ def all_index_entries(soup):
         author_element = entry_header.select_one(".author>a")
         hints_author = author_element.text
         logger.debug(f"hints_author : {hints_author}")
-        print(f"hints_author : {hints_author}")
 
         if title == "DT 29608":
             # This one does not have difficulty or enjoyment set
@@ -192,10 +180,7 @@ def all_index_entries(soup):
             enjoyment = 3
         else:
             difficulty = parse_string_for_difficulty(entry_content.text)
-            logger.debug(f"Difficulty : {difficulty}")
-
             enjoyment = parse_string_for_enjoyment(entry_content.text)
-            logger.debug(f"Enjoyment : {enjoyment}")
 
         last_updated = entry_footer.select_one("time.updated")["datetime"]
         logger.debug(f"Last Updated : {last_updated}")
@@ -208,37 +193,48 @@ def all_index_entries(soup):
             enjoyment=enjoyment,
             last_updated=last_updated,
         )
-        print(item)
         yield (item)
 
 
 def parse_index_page(html):
     logger.info("making the soup")
     soup = BeautifulSoup(html, "html.parser")
-    # sp = soup.prettify()
 
     bd_pages = []
     for entry in all_index_entries(soup):
         logger.info(entry)
-        print("entry is " + repr(entry))
         bd_pages.append(entry)
-
     return bd_pages
 
 
-def get_index_entries_for_date(index_date):
+def get_index_entries_for_date(index_date, dump=False):
     logger.debug(f"{index_date=}")
     html_text = download_index_for_date(index_date)
+
+    if dump:
+        html_dump_file = "dump_" + str(index_date.isoformat()) + ".html"
+        with open(html_dump_file, "w", encoding="utf-8") as f:
+            f.write(html_text)
+
     logger.debug("html length : %d", len(html_text))
     logger.debug("html : %s", html_text[:100])
     entries_for_date = parse_index_page(html_text)
     logger.info(entries_for_date)
-    print(entries_for_date)
+
+    if dump:
+        index_dump_file = "dump_" + index_date.isoformat() + ".index"
+        with open(index_dump_file, "w", encoding="utf-8") as f:
+            f.write(repr(entries_for_date))
+
+    return entries_for_date
 
 
-def download_date_range(start_date, days):
+def download_date_range(start_date, days, dump):
     logger.debug(f"{start_date=}")
     logger.debug(f"{days=}")
+    entries_for_range = []
 
     for index_date in dates_in_range(start_date, days):
-        entries_for_date = get_index_entries_for_date(index_date)
+        entries_for_range.append(get_index_entries_for_date(index_date, dump))
+
+    return entries_for_range

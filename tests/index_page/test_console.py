@@ -2,6 +2,7 @@ import click.testing
 import pytest
 import logging
 import requests
+import pathlib
 from bd_crossword.index_page import console
 
 logger = logging.getLogger(__name__)
@@ -34,6 +35,24 @@ def test_main_prints_message_on_request_error(runner, mock_requests_get):
     logger.debug("result.output is %s", result.stdout)
     # logger.debug("result.error is %s", result.stderr)
     assert "Error" in result.output
+
+
+def test_html_dump_files(runner, mock_requests_get):
+    date_string = "2010-01-01"
+    result = runner.invoke(
+        console.main, [f"--start-date-string={date_string}", "--days=1", "--dump"]
+    )
+
+    html_dump_file = pathlib.Path(f"dump_{date_string}.html")
+    index_dump_file = pathlib.Path(f"dump_{date_string}.index")
+
+    logger.debug(html_dump_file.resolve())
+    # logger.debug(result.output)
+    # logger.debug(result.exit_code)
+    assert result.exit_code == 0
+    assert html_dump_file.exists()
+    assert index_dump_file.exists()
+    assert html_dump_file.read_text() == "<html>This is the page</html>"
 
 
 # @pytest.fixture

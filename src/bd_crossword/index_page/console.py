@@ -21,21 +21,34 @@ logger = logging.getLogger(__name__)
     "--days",
     "-d",
     default=5,
-    help="The number of days to download (counting backwards from start-date and including the start-date)",
+    help="The number of days to download (counting backwards"
+    + " from start-date and including the start-date)",
     show_default=True,
 )
+@click.option(
+    "--dump",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Dump the html and index entries to the filesystem.",
+)
 @click.version_option(version=__version__)
-def main(start_date_string, days):
+def main(start_date_string, days, dump):
     """CLI for downloading BD index pages"""
     logger.debug("Running main...")
     # print("Running main...")
     click.echo(
-        f"Getting index pages starting at {start_date_string} and going back {days} days."
+        f"Getting index pages starting at {start_date_string} and "
+        + f"going back {days} days."
     )
     start_date = date.fromisoformat(start_date_string)
 
     try:
-        data = index_downloader.download_date_range(start_date=start_date, days=days)
+        data = index_downloader.download_date_range(
+            start_date=start_date, days=days, dump=dump
+        )
     except requests.RequestException as error:
         message = str(error)
         raise click.ClickException(message)
+
+    print(data)
