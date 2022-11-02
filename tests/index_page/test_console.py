@@ -3,7 +3,9 @@ import pytest
 import logging
 import requests
 import pathlib
+import time
 from bd_crossword.index_page import console
+from bd_crossword.index_page import index_page_getter
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +24,15 @@ def mock_requests_get(mocker):
     return mock
 
 
-def test_main_succeeds_new(runner, mock_requests_get):
+@pytest.fixture
+def mock_time_sleep(mocker):
+    mock_time = mocker.patch(
+        f"{index_page_getter.bd_request.__name__}.time", wraps=time
+    )
+    mock_time.sleep.return_value = None
+
+
+def test_main_succeeds_new(runner, mock_requests_get, mock_time_sleep):
     result = runner.invoke(console.main)
     # logger.debug(result.output)
     # logger.debug(result.exit_code)
@@ -37,68 +47,33 @@ def test_main_prints_message_on_request_error(runner, mock_requests_get):
     assert "Error" in result.output
 
 
-def test_html_dump_files(runner, mock_requests_get):
-    date_string = "2010-01-01"
+@pytest.fixture
+def setup_dump_files(runner, mock_requests_get):
+    date_string = "2020-01-01"
     result = runner.invoke(
         console.main, [f"--start-date-string={date_string}", "--days=1", "--dump"]
     )
 
     html_dump_file = pathlib.Path(f"dump_{date_string}.html")
     index_dump_file = pathlib.Path(f"dump_{date_string}.index")
-
     logger.debug(html_dump_file.resolve())
-    # logger.debug(result.output)
-    # logger.debug(result.exit_code)
-    assert result.exit_code == 0
-    assert html_dump_file.exists()
-    assert index_dump_file.exists()
-    assert html_dump_file.read_text() == "<html>This is the page</html>"
+    logger.debug(index_dump_file.resolve())
+
+    yield {
+        "result": result,
+        "html_dump_file": html_dump_file,
+        "index_dump_file": index_dump_file,
+    }
+
+    html_dump_file.unlink()
+    index_dump_file.unlink()
 
 
-# @pytest.fixture
-# def mock_wikipedia_random_page(mocker):
-#     return mocker.patch("hypermodern_python_iitt.wikipedia.random_page")
-
-
-# def test_main_uses_specified_language(runner, mock_wikipedia_random_page):
-#     runner.invoke(console.main, ["--language=pl"])
-#     mock_wikipedia_random_page.assert_called_with(language="pl")
-
-
-# @pytest.mark.e2e
-# def test_main_succeeds_in_production_env(runner):
-#     result = runner.invoke(console.main)
-#     assert result.exit_code == 0
-
-
-# def test_main_invokes_requests_get(runner, mock_requests_get):
-#     runner.invoke(console.main)
-#     assert mock_requests_get.called
-
-
-# def test_main_uses_en_wikipedia_org(runner, mock_requests_get):
-#     runner.invoke(console.main)
-#     args, _ = mock_requests_get.call_args
-#     assert "en.wikipedia.org" in args[0]
-
-
-# def test_main_fails_on_request_error(runner, mock_requests_get):
-#     mock_requests_get.side_effect = Exception("Boom")
-#     result = runner.invoke(console.main)
-#     logger.debug(result.output)
-
-#     assert result.exit_code == 1
-
-
-# def test_main_succeeds_new(runner, mock_requests_get):
-#     result = runner.invoke(console.main)
-#     logger.debug(result.output)
-
-#     assert result.exit_code == 0
-
-
-# def test_main_prints_message_on_request_error(runner, mock_requests_get):
-#     mock_requests_get.side_effect = requests.RequestException
-#     result = runner.invoke(console.main)
-#     logger.debug(result.output)
-#     assert "Error" in result.output
+def test_html_dump_files(runner, mock_requests_get, setup_dump_files):
+    assert setup_dump_files["result"].exit_code == 0
+    assert setup_dump_files["html_dump_file"].exists()
+    assert setup_dump_files["index_dump_file"].exists()
+    assert (
+        setup_dump_files["html_dump_file"].read_text()
+        == "<html>This is the page</html>"
+    )

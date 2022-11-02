@@ -1,30 +1,11 @@
 import logging
-import requests
 import re
-from datetime import timedelta
 from bs4 import BeautifulSoup
-from dataclasses import dataclass
+from bd_crossword.common import index_entry
+from datetime import datetime
 
 
 logger = logging.getLogger(__name__)
-
-headers = {
-    "Connection": "keep-alive",
-    "Upgrade-Insecure-Requests": "1",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ("
-    + "KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,i"
-    + "mage/webp,*/*;q=0.8",
-    "Accept-Language": "en-GB,en;q=0.5",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Referer": "https://www.google.com/",
-    "Sec-Fetch-Dest": "document",
-    "Sec-Fetch-Mode": "navigate",
-    "Sec-Fetch-Site": "none",
-    "Sec-Fetch-User": "?1",
-}
-
-url_template = "http://bigdave44.com/{year}/{month}/{day}"
 
 
 # Find the stars string for Difficulty
@@ -51,20 +32,10 @@ re_enjoyment_stars = re.compile(
 )
 
 
-@dataclass
-class IndexEntry:
-    title: str
-    url: str
-    hints_author: str
-    difficulty: str
-    enjoyment: str
-    last_updated: str
-
-
 def parse_string_for_difficulty(html_string):
     m = re_difficulty_stars.search(html_string)
     if not m:
-        raise Exception("NO DIFFICULTY FOUND")
+        raise ValueError("NO DIFFICULTY FOUND")
 
     logger.debug(f"difficulty stars {repr(m.group(1))}")
     difficulty = convert_stars_to_number(m.group(1))
@@ -75,7 +46,7 @@ def parse_string_for_difficulty(html_string):
 def parse_string_for_enjoyment(html_string):
     m = re_enjoyment_stars.search(html_string)
     if not m:
-        raise Exception("NO ENJOYMENT FOUND")
+        raise ValueError("NO ENJOYMENT FOUND")
 
     logger.debug(f"enjoyment stars {repr(m.group(1))}")
     enjoyment = convert_stars_to_number(m.group(1))
@@ -109,22 +80,7 @@ def convert_stars_to_number(stars):
         raise (ValueError(f"Invalid stars rating pattern found : {stars}"))
 
 
-def dates_in_range(start_date, days):
-    one_day = timedelta(days=1)
-    return (start_date - (day_count * one_day) for day_count in range(days))
-
-
-def download_index_for_date(index_date):
-    url = url_template.format(
-        year=index_date.year, month=index_date.month, day=index_date.day
-    )
-    logger.info(f"..fetching page {url}")
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
-    return response.text
-
-
-def all_index_entries(soup):
+def all_index_entries(soup, index_date):
     articles = soup.select("article")
     for article in articles:
         entry_header = article.select_one(".entry-header")
@@ -182,10 +138,13 @@ def all_index_entries(soup):
             difficulty = parse_string_for_difficulty(entry_content.text)
             enjoyment = parse_string_for_enjoyment(entry_content.text)
 
-        last_updated = entry_footer.select_one("time.updated")["datetime"]
+        last_updated = datetime.fromisoformat(
+            (entry_footer.select_one("time.updated")["datetime"])[:19]
+        )
         logger.debug(f"Last Updated : {last_updated}")
 
-        item = IndexEntry(
+        yield index_entry.IndexEntry(
+            page_date=index_date,
             title=title,
             url=url,
             hints_author=hints_author,
@@ -193,48 +152,14 @@ def all_index_entries(soup):
             enjoyment=enjoyment,
             last_updated=last_updated,
         )
-        yield (item)
 
 
-def parse_index_page(html):
+def parse_index_page(html, index_date):
     logger.info("making the soup")
     soup = BeautifulSoup(html, "html.parser")
 
     bd_pages = []
-    for entry in all_index_entries(soup):
+    for entry in all_index_entries(soup, index_date):
         logger.info(entry)
         bd_pages.append(entry)
     return bd_pages
-
-
-def get_index_entries_for_date(index_date, dump=False):
-    logger.debug(f"{index_date=}")
-    html_text = download_index_for_date(index_date)
-
-    if dump:
-        html_dump_file = "dump_" + str(index_date.isoformat()) + ".html"
-        with open(html_dump_file, "w", encoding="utf-8") as f:
-            f.write(html_text)
-
-    logger.debug("html length : %d", len(html_text))
-    logger.debug("html : %s", html_text[:100])
-    entries_for_date = parse_index_page(html_text)
-    logger.info(entries_for_date)
-
-    if dump:
-        index_dump_file = "dump_" + index_date.isoformat() + ".index"
-        with open(index_dump_file, "w", encoding="utf-8") as f:
-            f.write(repr(entries_for_date))
-
-    return entries_for_date
-
-
-def download_date_range(start_date, days, dump):
-    logger.debug(f"{start_date=}")
-    logger.debug(f"{days=}")
-    entries_for_range = []
-
-    for index_date in dates_in_range(start_date, days):
-        entries_for_range.append(get_index_entries_for_date(index_date, dump))
-
-    return entries_for_range

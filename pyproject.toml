@@ -23,6 +23,10 @@ coverage = {extras = ["toml"], version = "^6.4.4"}
 pytest-cov = "^3.0.0"
 pytest-mock = "^3.8.2"
 beautifulsoup4 = "^4.11.1"
+pyupgrade = "^3.1.0"
+jupyter = "^1.0.0"
+nb-black = "^1.0.7"
+black = "^22.10.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -31,7 +35,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 log_cli = true
-log_cli_level = "WARN"
+log_cli_level = "DEBUG"
 # log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
 log_cli_format = "%(asctime)s.%(msecs)03d [%(filename)20s:%(lineno)04d] %(levelname)-8s %(funcName)-30s %(message)s"
 log_cli_date_format = "%Y-%m-%d %H:%M:%S"

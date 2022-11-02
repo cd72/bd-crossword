@@ -1,18 +1,26 @@
 import click
 from datetime import date
 from datetime import datetime
-from . import __version__, index_downloader
+from . import __version__, index_page_getter
 import logging
 import requests
 
 logger = logging.getLogger(__name__)
+
+log_cli_format = "%(asctime)s.%(msecs)03d [%(filename)20s:%(lineno)04d] %(levelname)-8s %(funcName)-30s %(message)s"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+logging.basicConfig(
+    level=logging.DEBUG, format=log_cli_format, datefmt=log_cli_date_format
+)
+
+print("====================" + __name__)
 
 
 @click.command()
 @click.option(
     "--start-date-string",
     "-s",
-    default=datetime.today().strftime("%Y-%m-%d"),
+    default=datetime.now().strftime("%Y-%m-%d"),
     help="The start date of the days to get",
     metavar="YYYY-MM-DD",
     show_default=True,
@@ -42,13 +50,15 @@ def main(start_date_string, days, dump):
         + f"going back {days} days."
     )
     start_date = date.fromisoformat(start_date_string)
+    index_getter = index_page_getter.IndexPageGetter(dump=dump)
 
     try:
-        data = index_downloader.download_date_range(
-            start_date=start_date, days=days, dump=dump
+        data = index_getter.download_date_range(
+            start_date=start_date,
+            days=days,
         )
     except requests.RequestException as error:
         message = str(error)
-        raise click.ClickException(message)
+        raise click.ClickException(message) from error
 
     print(data)
