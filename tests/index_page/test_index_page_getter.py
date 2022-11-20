@@ -113,7 +113,7 @@ class TestGetIndexEntriesForDate:
     def test_using_dump_file(self, mock_requests_index, getter, mock_time_dot_sleep):
         logger.debug("testing for date %s", mock_requests_index["test_date_string"])
 
-        index_entry = getter.get_index_entries_for_date(
+        index_entry = getter.get_index_entry_for_date(
             date.fromisoformat(mock_requests_index["test_date_string"])
         )
         assert mock_time_dot_sleep.sleep.called

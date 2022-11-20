@@ -81,8 +81,10 @@ def convert_stars_to_number(stars):
 
 
 def all_index_entries(soup, index_date):
+    logger.debug("in all_index_entries")
     articles = soup.select("article")
     for article in articles:
+        logger.debug("found article")
         entry_header = article.select_one(".entry-header")
         entry_content = article.select_one(".entry-content")
         entry_footer = article.select_one(".entry-footer")
@@ -155,11 +157,13 @@ def all_index_entries(soup, index_date):
 
 
 def parse_index_page(html, index_date):
-    logger.info("making the soup")
+    logger.info(f"making the soup with html of length {len(html)}")
     soup = BeautifulSoup(html, "html.parser")
 
     bd_pages = []
+    logger.debug("starting loop")
     for entry in all_index_entries(soup, index_date):
+        logger.debug("in loop")
         logger.info(entry)
         bd_pages.append(entry)
     return bd_pages
