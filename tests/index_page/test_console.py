@@ -40,13 +40,29 @@ def mock_time_sleep(mocker):
 
 
 def test_main_succeeds_new(runner, mock_requests_get, mock_time_sleep):
-    result = runner.invoke(console.main)
+    result = runner.invoke(console.main, ["--days=1", "--force-download"])
     # logger.debug(result.output)
     # logger.debug(result.exit_code)
     assert result.exit_code == 0
 
 
-def test_main_prints_message_on_request_error(runner, mock_requests_get):
+def test_main_succeeds_new2(runner, mock_requests_get, mock_time_sleep):
+    result = runner.invoke(console.main, ["--days=1", "--force-download"])
+    # logger.debug(result.output)
+    # logger.debug(result.exit_code)
+    assert result.exit_code == 0
+
+
+def test_main_succeeds_new3(runner, mock_requests_get, mock_time_sleep):
+    result = runner.invoke(console.main, ["--days=1", "--force-download"])
+    # logger.debug(result.output)
+    # logger.debug(result.exit_code)
+    assert result.exit_code == 0
+
+
+def test_main_prints_message_on_request_error(
+    runner, mock_requests_get, mock_time_sleep
+):
     mock_requests_get.side_effect = requests.RequestException
     result = runner.invoke(console.main, ["--days=1", "--force-download"])
     # logger.debug("result.error is %s", result.stderr)
@@ -56,7 +72,7 @@ def test_main_prints_message_on_request_error(runner, mock_requests_get):
     assert "Error" in result.output
 
 
-def test_main_exit_1_on_request_error(runner, mock_requests_get):
+def test_main_exit_1_on_request_error(runner, mock_requests_get, mock_time_sleep):
     mock_requests_get.side_effect = requests.RequestException
     result = runner.invoke(console.main, ["--days=1", "--force-download"])
     logger.debug("result.exit_code is %s", result.exit_code)
@@ -65,7 +81,7 @@ def test_main_exit_1_on_request_error(runner, mock_requests_get):
 
 
 @pytest.fixture
-def setup_dump_files(runner, mock_requests_get):
+def setup_dump_files(runner, mock_requests_get, mock_time_sleep):
     date_string = "2020-01-01"
     result = runner.invoke(
         console.main,

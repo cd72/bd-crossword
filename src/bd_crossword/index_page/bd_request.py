@@ -39,7 +39,7 @@ class BDRequest:
         logger.debug(cls)
         return datetime.today()
 
-    def __init__(self, mean_interval=10):
+    def __init__(self, mean_interval=30):
         self.last_url = start_referer
         self.mean_interval = mean_interval
 

@@ -12,23 +12,23 @@ logger = logging.getLogger(__name__)
 re_difficulty_stars = re.compile(
     r"""
     Difficulty          # The string Difficulty
-    \s?                 # Optional space
+    \s*                 # Optional space
     (
-        [\*\/\ ]+              # one or more of the above set
+        \*[\*\/\ ]*              # one or more of the above set
     )
     """,
-    re.VERBOSE,
+    re.VERBOSE + re.IGNORECASE,
 )
 
 re_enjoyment_stars = re.compile(
     r"""
     Enjoyment           # The string Enjoyment
-    \s?                 # Optional space
+    \s*                 # Optional space
     (
-        [\*/\ ]+
+        \*[\*/\ ]*
     )
     """,
-    re.VERBOSE,
+    re.VERBOSE + re.IGNORECASE,
 )
 
 
@@ -55,6 +55,7 @@ def parse_string_for_enjoyment(html_string):
 
 
 def convert_stars_to_number(stars):
+    logger.debug(f"Stars input : {stars}")
     stars = stars.replace(" ", "")
     if stars == "*":
         return 1
@@ -76,21 +77,39 @@ def convert_stars_to_number(stars):
         return 3.5
     elif stars == "****/*****":
         return 4.5
+    elif stars == "**********":  # http://bigdave44.com/2021/12/30/dt-29871/
+        return 10
     else:
         raise (ValueError(f"Invalid stars rating pattern found : {stars}"))
 
 
+def all_articles(soup):
+    return soup.select("article")
+
+
+def get_subtitles(entry_content):
+    logger.debug(entry_content.prettify())
+    subtitles = [
+        subitem.lower().replace("\xa0", " ")
+        for item in entry_content.select("h1, h2, strong, span, p")
+        for subitem in item.text.splitlines()
+    ]
+    for subtitle in subtitles:
+        logger.debug("subtitle_text : %s", subtitle)
+    return subtitles
+
+
 def all_index_entries(soup, index_date):
     logger.debug("in all_index_entries")
-    articles = soup.select("article")
-    for article in articles:
-        logger.debug("found article")
+
+    for article in all_articles(soup):
+        logger.debug("found article %s", article.text)
         entry_header = article.select_one(".entry-header")
         entry_content = article.select_one(".entry-content")
         entry_footer = article.select_one(".entry-footer")
 
         title_element = entry_header.select_one(".entry-title")
-        title = title_element.text
+        title = " ".join(title_element.text.split())
 
         logger.debug("Title : %s", title)
 
@@ -100,18 +119,11 @@ def all_index_entries(soup, index_date):
         if "(Hints)" in title:
             continue
 
-        subtitles = [
-            subitem
-            for item in entry_content.select("h2")
-            for subitem in item.text.splitlines()
-        ]
-        for subtitle in subtitles:
-            logger.debug("subtitle_text : %s", subtitle)
+        if title == "DT 29606 (2021-02-17)":
+            # workaround for the strange anomoly on http://bigdave44.com/2021/2/17
+            continue
 
-        #    if subtitle.text.startswith('A full review'):
-        #        continue
-        #    if subtitle.text.startswith('The Saturday Crossword Club'):
-        #        continue
+        subtitles = get_subtitles(entry_content)
 
         if any(subtitle.startswith("The Saturday") for subtitle in subtitles):
             continue
@@ -119,21 +131,30 @@ def all_index_entries(soup, index_date):
         if any(subtitle.startswith("A full review") for subtitle in subtitles):
             continue
 
-        if not any(subtitle.startswith("Hints and tips") for subtitle in subtitles):
-            logger.warning('No subtitle called "Hints and tips" found')
+        # Miffypops returns
+        if (
+            all("hints and tips" not in subtitle for subtitle in subtitles)
+            and all("miffypops returns" not in subtitle for subtitle in subtitles)
+            and all("hints tips" not in subtitle for subtitle in subtitles)
+        ):
+
+            logger.warning('No subtitle called "hints and tips" found')
+            logger.debug(f"subtitles : {subtitles}")
             continue
 
         logger.debug(f"title : {title}")
+
+        title_element = entry_header.select_one(".entry-title")
         url = title_element.select_one("a")["href"]
         logger.debug(f"url : {url}")
-
         author_element = entry_header.select_one(".author>a")
         hints_author = author_element.text
         logger.debug(f"hints_author : {hints_author}")
 
-        if title == "DT 29608":
+        if title in {"DT 29608", "DT 29759", "DT 29043", "DT 28840"}:
             # This one does not have difficulty or enjoyment set
             # bigdave44.com/2021/02/25/125809/
+            # bigdave44.com/2021/8/20/
             difficulty = 3
             enjoyment = 3
         else:

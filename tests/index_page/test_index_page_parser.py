@@ -31,6 +31,8 @@ logger = logging.getLogger(__name__)
         ("**/***", 2.5),
         ("***/****", 3.5),
         ("****/*****", 4.5),
+        ("******", 6),
+        ("**********", 10),
     ],
 )
 def test_stars_to_numbers(stars_input, expected_value):
@@ -38,7 +40,7 @@ def test_stars_to_numbers(stars_input, expected_value):
 
 
 def test_stars_to_numbers_exception():
-    stars_input = "**********"
+    stars_input = "***********"
     with pytest.raises(ValueError) as excinfo:
         index_page_parser.convert_stars_to_number(stars_input)
     assert "Invalid stars rating pattern found" in str(excinfo.value)
@@ -81,13 +83,17 @@ class TestGetIndexEntriesForDate:
         logger.debug("using result file : %s", str(result_file.resolve()))
         html_content = html_file.read_text()
 
-        expected_result_json = result_file.read_text()
         try:
+            expected_result_json = result_file.read_text()
             expected_result = json.loads(
                 expected_result_json, object_hook=json_decode_object_hook
             )
         except json.decoder.JSONDecodeError as err:
             logger.warn(err)
+            expected_result = {}
+        except FileNotFoundError as err:
+            logger.warn(err)
+            result_file.write_text("{}")
             expected_result = {}
 
         logger.debug("expected result is :\n%s", expected_result)
