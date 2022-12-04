@@ -1,5 +1,5 @@
 from . import index_page_parser
-from . import bd_request
+from bd_crossword.common import bd_request
 from datetime import timedelta
 import itertools
 from bd_crossword.common import crossword_index

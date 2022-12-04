@@ -8,7 +8,7 @@ import time
 # import unittest.mock
 # from unittest.mock import patch
 
-from bd_crossword.index_page import bd_request
+from bd_crossword.common import bd_request
 
 logger = logging.getLogger(__name__)
 
