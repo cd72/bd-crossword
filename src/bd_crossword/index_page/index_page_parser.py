@@ -138,7 +138,7 @@ def all_index_entries(soup, index_date):
             and all("hints tips" not in subtitle for subtitle in subtitles)
         ):
 
-            logger.warning('No subtitle called "hints and tips" found')
+            logger.debug('No subtitle called "hints and tips" found')
             logger.debug(f"subtitles : {subtitles}")
             continue
 

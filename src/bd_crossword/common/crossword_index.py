@@ -1,8 +1,9 @@
 import textwrap
 import sqlite3
 from . import index_entry
+import logging
 
-# def load_index_entry():
+logger = logging.getLogger(__name__)
 
 
 class CrosswordIndex:
@@ -10,7 +11,7 @@ class CrosswordIndex:
         self.conn = sqlite3.connect(
             filename, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES
         )
-        print(filename)
+        logger.warning("Using sqlite database : %s", filename)
         create_table = textwrap.dedent(
             """CREATE TABLE IF NOT EXISTS index_entry (
                 page_date    date,
@@ -49,7 +50,7 @@ class CrosswordIndex:
         self.print_count()
 
     def retrieve_index_entry_for_date(self, page_date):
-        print(f"{page_date=}")
+        logger.debug(f"{page_date=}")
 
         select_stmt = textwrap.dedent(
             """
@@ -76,8 +77,8 @@ class CrosswordIndex:
         return None
 
     def print_count(self):
-        print("printing the count")
+        logger.debug("printing the count")
         select_stmt = "select count(*) from index_entry"
         res = self.conn.execute(select_stmt)
         row = res.fetchone()
-        print(row["count(*)"])
+        logger.debug(row["count(*)"])

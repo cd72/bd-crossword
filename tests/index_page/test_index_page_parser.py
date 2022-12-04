@@ -117,12 +117,14 @@ class TestGetIndexEntriesForDate:
             sort_keys=True,
             cls=EnhancedJSONEncoder,
         )
-        print("The json is")
-        print(index_entry_json)
+        logger.debug("The json returned by the index page parser is")
+        logger.debug(index_entry_json)
 
         expected_result_dict = file_info["expected_result"]
-        print("======================================================================")
-        print(f"{expected_result_dict=}")
+        logger.debug(
+            "======================================================================"
+        )
+        logger.debug(f"{expected_result_dict=}")
         expected_index_entry = index_entry.IndexEntry(**expected_result_dict)
 
         assert returned_index_entry == expected_index_entry
