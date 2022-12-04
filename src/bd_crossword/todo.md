@@ -1,0 +1,1 @@
+- Add flag to console specifying database name or :memory:
