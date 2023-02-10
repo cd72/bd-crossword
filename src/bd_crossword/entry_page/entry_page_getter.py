@@ -1,71 +1,65 @@
 # from . import index_page_parser
 from bd_crossword.common import bd_request
-from datetime import timedelta
-import itertools
-from bd_crossword.common import crossword_index
+from pathlib import Path
 import logging
+from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
+logger.debug("Debug: Importing %s", __name__)
+logger.info("Info: Importing %s", __name__)
+logger.warning("Warning: Importing %s", __name__)
 
 
-class IndexPageGetter:
-    @classmethod
-    def dates_in_range(cls, start_date, days):
-        one_day = timedelta(days=1)
-        days_generator = (
-            start_date - (day_count * one_day) for day_count in range(days * 3)
-        )
-        weekdays_generator = (day for day in days_generator if day.isoweekday() <= 5)
-        return itertools.islice(weekdays_generator, days)
+def convert_url_to_cache_file_name(title: str, cache_folder):
+    title = title.replace(" ", "")
+    cache_file_name = Path(f"{cache_folder}/{Path(title).name}.html")
+    logger.debug(f"cache file name is {cache_file_name}")
+    return cache_file_name
 
-    def __init__(
-        self, database_file="bd_crossword.db", dump=False, force_download=False
-    ):
-        self.database_file = database_file
-        self.dump = dump
-        self.force_download = force_download
-        self.db = crossword_index.CrosswordIndex(filename=database_file)
 
-    def dump_out(self, file_type, content, index_date):
-        if self.dump:
-            dump_file = f"dump_{str(index_date.isoformat())}.{file_type}"
-            with open(dump_file, "w", encoding="utf-8") as f:
-                f.write(content)
+def get_html_from_disk_cache(url, cache_folder):
+    cache_file_name = convert_url_to_cache_file_name(url, cache_folder)
 
-    def get_index_entry_for_date(self, index_date):
-        if not self.force_download:
-            if entry_for_date := self.db.retrieve_index_entry_for_date(index_date):
-                logger.debug(f"Found entry for date {index_date} in db")
-                return entry_for_date
+    if cache_file_name.is_file():
+        logger.debug(f"loading {cache_file_name} from disk cache")
+        return cache_file_name.read_text(encoding="utf8")
 
-        logger.debug(f"Downloading entry for date {index_date=}")
-        bd = bd_request.BDRequest(mean_interval=30)
-        html_text = bd.download_index_for_date(index_date)
-        logger.debug("html length : %d", len(html_text))
-        logger.debug("html : %s", html_text[:100])
-        self.dump_out("html", html_text, index_date)
 
-        entries_for_date = index_page_parser.parse_index_page(html_text, index_date)
+def save_html_to_disk_cache(url, html, cache_folder):
+    cache_file_name = convert_url_to_cache_file_name(url, cache_folder)
 
-        if len(entries_for_date) == 0:
-            logger.warning(f"Did not find any entries for {index_date}")
-        else:
-            logger.debug(
-                f"The number of index entries found was {len(entries_for_date)}"
-            )
+    logger.debug(f"saving html to cache file {cache_file_name}")
+    cache_file_name.write_text(html, encoding="utf8")
 
-        [entry_for_date] = entries_for_date
 
-        self.db.new_index_entry(entry_for_date)
-        logger.info(entry_for_date)
-        self.dump_out("index", repr(entry_for_date), index_date)
+def download_html_from(url):
+    logger.info(f"..fetching page {url}")
+    bd = bd_request.BDRequest(mean_interval=30)
+    return bd.download_url(url)
 
-        return entry_for_date
 
-    def download_date_range(self, start_date, days):
-        logger.debug(f"{start_date=}")
-        logger.debug(f"{days=}")
-        return [
-            self.get_index_entry_for_date(index_date)
-            for index_date in self.dates_in_range(start_date, days)
-        ]
+def simplify_html(html):
+    soup = BeautifulSoup(html, "html.parser")
+    entry_content = soup.select_one(".entry-content")
+
+    if not entry_content:
+        Path("error.html").write_text(soup.prettify(), encoding="utf8")
+        raise ValueError("Could not match entry, see error.html")
+
+    return entry_content.prettify()
+
+
+def get_entry_page(
+    title, url, cache_folder="bd_entry_page_cache", force_download=False
+):
+    Path(cache_folder).mkdir(parents=True, exist_ok=True)
+
+    if not force_download:
+        html = get_html_from_disk_cache(title, cache_folder)
+
+    if not html:
+        html = download_html_from(url)
+        html = simplify_html(html)
+        save_html_to_disk_cache(title, html, cache_folder)
+
+    return html

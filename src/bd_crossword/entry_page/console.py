@@ -2,10 +2,10 @@ import click
 from datetime import date
 from datetime import datetime
 from . import __version__
+from bd_crossword.common import crossword_index
 
 from . import entry_page_getter
 import logging
-import requests
 
 # import requests
 
@@ -53,14 +53,9 @@ def main(page_date_string, dump, force_download):
     page_date = date.fromisoformat(page_date_string)
     logger.debug("page_date : %s", str(page_date))
 
-    entry_page = entry_page_getter.EntryPageGetter(
-        dump=dump, force_download=force_download
-    )
+    database_file = "bd_crossword.db"
+    db = crossword_index.CrosswordIndex(filename=database_file)
 
-    try:
-        page_data = entry_page.get_entry_page_for_date(page_date)
-    except requests.RequestException as error:
-        message = str(error)
-        raise click.ClickException(message) from error
-
-    print(page_data)
+    for title, url in db.retrieve_all_urls():
+        print(f"{url=}")
+        entry_page_getter.download_entry_page(title, url)

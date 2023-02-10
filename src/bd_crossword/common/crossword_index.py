@@ -76,6 +76,38 @@ class CrosswordIndex:
         print("no rows found")
         return None
 
+    def retrieve_all_urls(self):
+        select_stmt = textwrap.dedent(
+            """
+            select title, url
+            from index_entry
+            order by page_date desc
+            """
+        )
+
+        cur = self.conn.cursor()
+        cur.execute(select_stmt)
+        # import itertools
+        # for row in itertools.islice(cur, 500):
+        for row in cur:
+            yield row["title"], row["url"]
+
+    def retrieve_all(self):
+        select_stmt = textwrap.dedent(
+            """
+            select *
+            from index_entry
+            order by page_date desc
+            """
+        )
+
+        cur = self.conn.cursor()
+        cur.execute(select_stmt)
+        # import itertools
+        # for row in itertools.islice(cur, 500):
+        for row in cur:
+            yield dict(row)
+
     def print_count(self):
         logger.debug("printing the count")
         select_stmt = "select count(*) from index_entry"
