@@ -1,9 +1,10 @@
 import logging
 import re
-from bs4 import BeautifulSoup
-from bd_crossword.common import index_entry
 from datetime import datetime
 
+from bs4 import BeautifulSoup
+
+from bd_crossword.common import index_entry
 
 logger = logging.getLogger(__name__)
 
@@ -134,10 +135,10 @@ def all_index_entries(soup, index_date):
         # Miffypops returns
         if (
             all("hints and tips" not in subtitle for subtitle in subtitles)
+            and all("hints & tips" not in subtitle for subtitle in subtitles)
             and all("miffypops returns" not in subtitle for subtitle in subtitles)
             and all("hints tips" not in subtitle for subtitle in subtitles)
         ):
-
             logger.debug('No subtitle called "hints and tips" found')
             logger.debug(f"subtitles : {subtitles}")
             continue

@@ -1,9 +1,9 @@
 import click
+import rich
 from datetime import date
 from datetime import datetime
 from . import __version__, index_page_getter
 import logging
-import requests
 
 logger = logging.getLogger(__name__)
 
@@ -74,4 +74,4 @@ def main(start_date_string, days, dump, force_download):
         message = str(error)
         raise click.ClickException(message) from error
 
-    print(data)
+    rich.print(data)

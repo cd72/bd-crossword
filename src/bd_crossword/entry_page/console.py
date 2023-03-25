@@ -58,4 +58,4 @@ def main(page_date_string, dump, force_download):
 
     for title, url in db.retrieve_all_urls():
         print(f"{url=}")
-        entry_page_getter.download_entry_page(title, url)
+        entry_page_getter.get_entry_page(title, url)

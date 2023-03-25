@@ -73,8 +73,36 @@ class CrosswordIndex:
                 enjoyment=row["enjoyment"],
                 last_updated=row["last_updated"],
             )
-        print("no rows found")
+        logger.debug("no rows found")
         return None
+
+
+    def retrieve_index_entry_for_title(self, title):
+        logger.debug(f"{title=}")
+
+        select_stmt = textwrap.dedent(
+            """
+            select page_date, title, url,
+                hints_author, difficulty, enjoyment, last_updated
+            from index_entry
+            where title = ?
+            """
+        )
+        res = self.conn.execute(select_stmt, [title])
+        row = res.fetchone()
+        if row is not None:
+            return index_entry.IndexEntry(
+                page_date=row["page_date"],
+                title=row["title"],
+                url=row["url"],
+                hints_author=row["hints_author"],
+                difficulty=row["difficulty"],
+                enjoyment=row["enjoyment"],
+                last_updated=row["last_updated"],
+            )
+        logger.debug("no rows found")
+        return None
+
 
     def retrieve_all_urls(self):
         select_stmt = textwrap.dedent(

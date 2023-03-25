@@ -70,7 +70,7 @@ def json_decode_object_hook(the_dict):
 
 class TestGetIndexEntriesForDate:
     test_file_location = pathlib.Path(__file__).parent / "test_data_files"
-    test_files = list(test_file_location.rglob("*.html"))
+    test_files = sorted(list(test_file_location.rglob("*.html")))
     assert len(test_files) > 1
 
     @pytest.fixture(params=test_files)
