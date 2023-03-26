@@ -58,6 +58,7 @@ def get_puzzle_title(puzzle_html):
     return f"DT {get_puzzle_id_number(puzzle_html)}"
 
 def parse_html(html: str) -> Crossword:
+    logger.debug("Runing parse_html")
     return Crossword(
         title = get_puzzle_title(html),
         hints_author = get_puzzle_hints_author(html)

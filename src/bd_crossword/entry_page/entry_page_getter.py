@@ -5,10 +5,6 @@ import logging
 from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
-logger.debug("Debug: Importing %s", __name__)
-logger.info("Info: Importing %s", __name__)
-logger.warning("Warning: Importing %s", __name__)
-
 
 def convert_url_to_cache_file_name(title: str, cache_folder):
     title = title.replace(" ", "")
