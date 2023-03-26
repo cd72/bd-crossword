@@ -15,48 +15,74 @@ from bd_crossword.common import crossword_index
 logger = logging.getLogger(__name__)
 logger.info(__name__)
 
+def metadata_idfn(a_metadata_test):
+    return a_metadata_test["title"].replace(" ", "-")
+
 
 @pytest.fixture(scope="module")
 def crossword_index_database():
     return crossword_index.CrosswordIndex("./bd_crossword.db")
 
 
+metadata_tests = [
+    {
+        "title": "DT 30231",
+        "comments": "a randomly chosen StephenL",
+        "hints_author": "StephenL",
+        "difficulty": 2,
+        "enjoyment": 4.5,
+    },
+    {
+        "title": "DT 30232",
+        "comments": "a randomly chosen Mr K",
+        "hints_author": "Mr K",
+        "difficulty": 2,
+        "enjoyment": 3,
+    },
+    {
+        "title": "DT 29608",
+        "comments": "no difficulty or enjoyment stars set",
+        "hints_author": "Miffypops",
+        "difficulty": 3,
+        "enjoyment": 3,
+    },
+]
+
+
+
+@pytest.mark.parametrize(
+    "metadata_test", metadata_tests, ids=metadata_idfn, scope="class"
+)
 class TestMetadata:
-    basic_tests = [
-        {"title": "DT 30231", "hints_author": "StephenL"},
-        {"title": "DT 30232", "hints_author": "Mr K"}
-    ]
-
-    """Arrange"""
-    @pytest.fixture(scope="class", params=basic_tests)
-    def basic_test_data(self, request):
-        return request.param
-
+    # Arrange
     @pytest.fixture(scope="class")
-    def entry_author(self, basic_test_data):
-        return basic_test_data["hints_author"]
-
-    @pytest.fixture(scope="class")
-    def an_index_entry(self, basic_test_data, crossword_index_database):
-        title = basic_test_data["title"]
+    def an_index_entry(self, metadata_test, crossword_index_database):
+        title = metadata_test["title"]
         return crossword_index_database.retrieve_index_entry_for_title(title)
 
     @pytest.fixture(scope="class")
     def an_entry_page_html(self, an_index_entry: index_entry.IndexEntry):
-        return entry_page_getter.get_entry_page(an_index_entry.title, an_index_entry.url)
+        return entry_page_getter.get_entry_page(
+            an_index_entry.title, an_index_entry.url
+        )
 
-    """Act"""
+    # Act
     @pytest.fixture(scope="class", autouse=True)
     def parse_result(self, an_entry_page_html: str):
         return entry_page_parser.parse_html(an_entry_page_html)
 
-    """Assert"""
-    def test_parse_html_type(self, parse_result):
+    # Assert
+    def test_parse_html_result_type(self, parse_result):
         assert type(parse_result) is entry_page_parser.Crossword
 
-    def test_parse_html_title(self, parse_result, an_index_entry):
+    def test_title(self, parse_result, an_index_entry):
         assert parse_result.title == an_index_entry.title
 
-    def test_parse_html_author(self, parse_result, entry_author):
-        assert parse_result.hints_author == entry_author
+    def test_author(self, parse_result, metadata_test):
+        assert parse_result.hints_author == metadata_test["hints_author"]
 
+    def test_difficulty(self, parse_result, metadata_test):
+        assert parse_result.difficulty == metadata_test["difficulty"]
+
+    def test_enjoyment(self, parse_result, metadata_test):
+        assert parse_result.enjoyment == metadata_test["enjoyment"]

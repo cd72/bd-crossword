@@ -38,30 +38,33 @@ class CrosswordClue:
 
 @dataclass
 class Crossword:
-    title: Optional[str] = None
-    hints_author: Optional[str] = None
-    difficulty: Optional[float] = None
-    enjoyment: Optional[float] = None
+    title: str = None
+    hints_author: str = None
+    difficulty: float = None
+    enjoyment: float = None
     url: Optional[str] = None
     puzzle_date: Optional[datetime.date] = None
     across_clues: Optional[dict[int, CrosswordClue]] = None
     down_clues: Optional[dict[int, CrosswordClue]] = None
     clues: Optional[list[CrosswordClue]] = None
 
+
 def get_puzzle_id_number(puzzle_html):
-    return re.search(
-        r"Daily Telegraph Cryptic No (\d{5})", puzzle_html
-    )[1]
+    return re.search(r"Daily Telegraph Cryptic No (\d{5})", puzzle_html)[1]
+
 
 def get_puzzle_title(puzzle_html):
     # puzzle_title = soup.select_one("h1.entry-title").text
     return f"DT {get_puzzle_id_number(puzzle_html)}"
 
+
 def parse_html(html: str) -> Crossword:
     logger.debug("Runing parse_html")
     return Crossword(
-        title = get_puzzle_title(html),
-        hints_author = get_puzzle_hints_author(html)
+        title=get_puzzle_title(html),
+        hints_author=get_puzzle_hints_author(html),
+        difficulty=get_difficulty(html),
+        enjoyment=get_enjoyment(html),
     )
 
 def convert_stars_to_number(stars):
@@ -95,37 +98,20 @@ def get_puzzle_hints_author(puzzle_html):
     return re.search(r"Hints and tips by (.+?)$", puzzle_html, re.MULTILINE)[1]
 
 
-def parse_string_for_difficulty(html_string):
-    m = bd_regexes.re_difficulty_stars.search(html_string)
-    if not m:
-        raise Exception("NO DIFFICULTY FOUND")
+def get_difficulty(html):
+    puzzles_without_difficulty = {"DT 29608"}
+    if get_puzzle_title(html) in puzzles_without_difficulty:
+        return 3
 
-    logger.debug(f"difficulty stars {repr(m.group(1))}")
-    difficulty = convert_stars_to_number(m.group(1))
-    logger.debug(f"difficulty: {difficulty}")
-    return difficulty
+    m = re.search(r"Difficulty (.+?)$", html, re.MULTILINE)
+    return convert_stars_to_number(m[1])
 
-
-def parse_string_for_enjoyment(html_string):
-    m = bd_regexes.re_enjoyment_stars.search(html_string)
-    if not m:
-        raise Exception("NO ENJOYMENT FOUND")
-
-    logger.debug(f"enjoyment stars {repr(m.group(1))}")
-    enjoyment = convert_stars_to_number(m.group(1))
-    logger.debug(f"enjoyment: {enjoyment}")
-    return enjoyment
-
-
-def get_puzzle_difficulty(html):
-    entry_content = html.select_one(".entry-content")
-    return parse_string_for_difficulty(entry_content.text)
-
-
-def get_puzzle_enjoyment(html):
-    entry_content = html.select_one(".entry-content")
-    return parse_string_for_enjoyment(entry_content.text)
-
+def get_enjoyment(html):
+    puzzles_without_enjoyment = {"DT 29608"}
+    if get_puzzle_title(html) in puzzles_without_enjoyment:
+        return 3
+    m = re.search(r"Enjoyment (.+?)$", html, re.MULTILINE)
+    return convert_stars_to_number(m[1])
 
 def get_puzzle_url(html):
     match = re.findall(bd_regexes.re_page_url, html)
