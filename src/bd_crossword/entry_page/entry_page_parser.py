@@ -6,6 +6,8 @@ import datetime
 from bs4 import BeautifulSoup
 from typing import Optional
 
+from bd_crossword.entry_page import entry_page_fix_up
+
 # from bd_crossword.common import crossword_index, index_entry
 
 logger = logging.getLogger(__name__)
@@ -95,7 +97,7 @@ def convert_stars_to_number(stars):
 
 def get_puzzle_hints_author(puzzle_html):
     # puzzle_author = soup.select_one("span.author").text
-    return re.search(r"Hints and tips by (.+?)$", puzzle_html, re.MULTILINE)[1]
+    return re.search(r"Hints and tips by (.+?) ?<", puzzle_html, re.MULTILINE)[1]
 
 
 def get_difficulty(html):
@@ -103,14 +105,14 @@ def get_difficulty(html):
     if get_puzzle_title(html) in puzzles_without_difficulty:
         return 3
 
-    m = re.search(r"Difficulty (.+?)$", html, re.MULTILINE)
+    m = re.search(r"Difficulty ([\*\/\ ]+)", html, re.MULTILINE)
     return convert_stars_to_number(m[1])
 
 def get_enjoyment(html):
     puzzles_without_enjoyment = {"DT 29608"}
     if get_puzzle_title(html) in puzzles_without_enjoyment:
         return 3
-    m = re.search(r"Enjoyment (.+?)$", html, re.MULTILINE)
+    m = re.search(r"Enjoyment ([\*\/\ ]+)", html, re.MULTILINE)
     return convert_stars_to_number(m[1])
 
 def get_puzzle_url(html):
@@ -120,9 +122,75 @@ def get_puzzle_url(html):
 
     return match[0]
 
-
 def get_puzzle_date(html):
     match = re.search(bd_regexes.re_page_date, html)
     if not match:
         raise ValueError("Could not match a date")
     return datetime.date(int(match.group(1)), int(match.group(2)), int(match.group(3)))
+
+
+def get_soup(html):
+    return BeautifulSoup(html, "html.parser")
+
+re_clue_line = re.compile(
+    r"""
+    (\d{1,2})([a|d])                    # Clue Identifier
+    \s*                                 # After the clue identifier we 
+                                        # can see whitespace
+    (.+?)                               # Then the actual clue
+    \s*                                 # Then more whitespace before an open bracket
+    (\([0-9,-]+\))                      # In brackets we get the word(s) lengths 
+                                        # sometimes comma separated
+    (.*?\n)                             # Ignore anything else up to the end of the
+                                        # line and start of next
+    .{0,5}                              # A few chars at start of next line.  e.g. <p>             
+    \<span\ class="spoiler"\>           # <span class="spoiler">
+    \s?                                 # Optional space
+    (.+?)                               # The solution
+    \s?                                 # Optional space
+    \<\/span\>
+    \s??                                # Optional space
+    [:–—.]                              # Either a colon or a dash
+                                        # or in the case of 29925 10d even a .
+    ?                                   # or according to 29932 13a nothing at all
+    \s*
+    (.+)                               # The hint
+""",
+    re.VERBOSE + re.DOTALL + re.MULTILINE,
+)
+
+from collections import Counter
+def parse_for_clues(html):
+    logger.debug("running...")
+    html = entry_page_fix_up.fix_up_html(html)
+    soup = get_soup(html)
+    clues = Counter()
+    current_direction = None
+
+
+    for paragraph in soup.select("p"):
+        #logger.debug(type(paragraph))
+        logger.debug(paragraph)
+
+        logger.debug('.%s.',str(paragraph.text).strip())
+        paragraph_text = str(paragraph.text).strip()
+        
+        if paragraph_text in  ["Across", "Down"]:
+            logger.debug(f"{paragraph_text} Header Found")
+            current_direction = paragraph_text
+            next
+
+        if current_direction is None:
+            next
+
+        if match := re.search(re_clue_line, str(paragraph)):
+            print("Match found")
+            clues[current_direction]+=1
+        else:
+            print("no match found")
+
+
+        #logger.debug(str(paragraph))
+
+
+    return clues

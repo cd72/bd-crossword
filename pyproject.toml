@@ -34,6 +34,7 @@ pandas = "^1.5.2"
 mypy = "^1.0.1"
 types-beautifulsoup4 = "^4.11.6.7"
 notebook = "^6.5.3"
+jupyter-black = "^0.3.3"
 
 [build-system]
 requires = ["poetry-core"]
@@ -41,10 +42,10 @@ build-backend = "poetry.core.masonry.api"
 
 
 [tool.pytest.ini_options]
-# log_cli = true
-# log_cli_level = "DEBUG"
-# log_cli_format = "%(asctime)s.%(msecs)03d [%(filename)25s:%(lineno)04d] %(levelname)-8s %(funcName)-30s %(message)s"
-# log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+log_cli = true
+log_cli_level = "DEBUG"
+log_cli_format = "%(asctime)s.%(msecs)03d [%(filename)25s:%(lineno)04d] %(levelname)-8s %(funcName)-30s %(message)s"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
 
 log_level = "DEBUG"
 log_format = "%(asctime)s.%(msecs)03d [%(filename)25s:%(lineno)04d] %(levelname)-8s %(funcName)-30s %(message)s"
