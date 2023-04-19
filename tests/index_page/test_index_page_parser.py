@@ -68,20 +68,16 @@ def json_decode_object_hook(the_dict):
     return the_dict
 
 
-class TestGetIndexEntriesForDate:
+def html_files():
     test_file_location = pathlib.Path(__file__).parent / "test_data_files"
-    test_files = sorted(list(test_file_location.rglob("*.html")))
-    assert len(test_files) > 1
+    return sorted(list(test_file_location.rglob("*.html")))
 
-    @pytest.fixture(params=test_files)
-    def file_info(self, request):
-        html_file = request.param
+def html_file_content():
+    return [html_file.read_text() for html_file in html_files()]
+
+def html_expected():
+    for html_file in html_files():
         result_file = html_file.with_suffix(".index")
-        test_date_string = html_file.stem.removeprefix("dump_")[:10]
-
-        logger.debug("using html file : %s", str(html_file.resolve()))
-        logger.debug("using result file : %s", str(result_file.resolve()))
-        html_content = html_file.read_text()
 
         try:
             expected_result_json = result_file.read_text()
@@ -96,19 +92,22 @@ class TestGetIndexEntriesForDate:
             result_file.write_text("{}")
             expected_result = {}
 
-        logger.debug("expected result is :\n%s", expected_result)
+        yield expected_result
 
-        return {
-            "html_content": html_content,
-            "expected_result": expected_result,
-            "test_date_string": test_date_string,
-        }
+def html_name():
+    return [html_file.stem.removeprefix("dump_")[:10] for html_file in html_files()]
 
-    def test_using_dump_file(self, file_info):
-        logger.debug("testing for date %s", file_info["test_date_string"])
+def html_date_string():
+    return [html_file.stem.removeprefix("dump_")[:10] for html_file in html_files()]
+
+
+@pytest.mark.parametrize("html_content, expected_result, test_date_string", zip(html_file_content(), html_expected(), html_date_string()), ids=html_name())
+class TestGetIndexEntriesForDate:
+    def test_using_dump_file(self, html_content, expected_result, test_date_string):
+        logger.debug("testing for name %s", test_date_string)
 
         [returned_index_entry] = index_page_parser.parse_index_page(
-            file_info["html_content"], date.fromisoformat(file_info["test_date_string"])
+            html_content, date.fromisoformat(test_date_string)
         )
 
         index_entry_json = json.dumps(
@@ -120,11 +119,10 @@ class TestGetIndexEntriesForDate:
         logger.debug("The json returned by the index page parser is")
         logger.debug(index_entry_json)
 
-        expected_result_dict = file_info["expected_result"]
         logger.debug(
             "======================================================================"
         )
-        logger.debug(f"{expected_result_dict=}")
-        expected_index_entry = index_entry.IndexEntry(**expected_result_dict)
+        logger.debug(f"{expected_result=}")
+        expected_index_entry = index_entry.IndexEntry(**expected_result)
 
         assert returned_index_entry == expected_index_entry
