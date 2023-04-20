@@ -132,27 +132,6 @@ class TestParsing:
 
         return entry_page_parser.parse_for_clues(an_entry_page_html)
 
-@pytest.mark.parametrize("clues_test", clues_tests, ids=metadata_idfn, scope="class")
-class TestParsing:
-    # Arrange
-    @pytest.fixture(scope="class")
-    def an_index_entry(self, clues_test, crossword_index_database):
-        title = clues_test["title"]
-        return crossword_index_database.retrieve_index_entry_for_title(title)
-
-    @pytest.fixture(scope="class")
-    def an_entry_page_html(self, an_index_entry: index_entry.IndexEntry):
-        return entry_page_getter.get_entry_page(
-            an_index_entry.title, an_index_entry.url
-        )
-
-    @pytest.fixture(scope="class", autouse=True)
-    def act(self, an_entry_page_html: str):
-        logger.debug("Act")
-        logger.debug("id is %s", id(self))
-
-        return entry_page_parser.parse_for_clues(an_entry_page_html)
-
 
     # @pytest.fixture(scope="function", autouse=True)
     # def function_act_caplog_records(self, caplog, act):
