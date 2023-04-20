@@ -124,6 +124,10 @@ def all_index_entries(soup, index_date):
             # workaround for the strange anomoly on http://bigdave44.com/2021/2/17
             continue
 
+        title = re.sub(r"(DT) No (\d{5})", r"\1 \2", title) # e.g. http://bigdave44.com/2023/04/13/168326/
+        title = re.sub(r"(DT)(\d{5})", r"\1 \2", title) # e.g. http://bigdave44.com/2017/08/07/dt28499/
+        title = re.sub(r"(DT)-(\d{5})", r"\1 \2", title) # e.g. http://bigdave44.com/2019/12/30/dt-29246/
+
         subtitles = get_subtitles(entry_content)
 
         if any(subtitle.startswith("The Saturday") for subtitle in subtitles):
