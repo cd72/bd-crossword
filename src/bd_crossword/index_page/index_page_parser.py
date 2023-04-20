@@ -156,7 +156,7 @@ def all_index_entries(soup, index_date):
         hints_author = author_element.text
         logger.debug(f"hints_author : {hints_author}")
 
-        if title in {"DT 29608", "DT 29759", "DT 29043", "DT 28840"}:
+        if title in {"DT 29608", "DT 29759", "DT 29043", "DT 28840", "DT 28286"}:
             # This one does not have difficulty or enjoyment set
             # bigdave44.com/2021/02/25/125809/
             # bigdave44.com/2021/8/20/
