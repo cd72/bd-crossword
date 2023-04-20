@@ -50,7 +50,7 @@ def simplify_html_old(html):
 
 
 def simplify_html(html):
-    #  30218 the Cryptic word is not included
+    #  30218 the Cryptic word is not included hence the non-capturing group (?:)
     re_basic_content_start = re.compile(
         r"""\>Daily\sTelegraph\s(?:Cryptic\s)?No.+""",
         re.VERBOSE + re.MULTILINE + re.DOTALL,
