@@ -34,7 +34,7 @@ def save_html_to_disk_cache(url, html, cache_folder):
 
 def download_html_from(url):
     logger.info(f"..fetching page {url}")
-    bd = bd_request.BDRequest(mean_interval=30)
+    bd = bd_request.BDRequest(mean_interval=40)
     return bd.download_url(url)
 
 
@@ -49,10 +49,19 @@ def simplify_html_old(html):
     return entry_content.prettify()
 
 
-def simplify_html(html):
-    #  30218 the Cryptic word is not included hence the non-capturing group (?:)
+def simplify_html(html: str):
+    html = html.replace(">DT Cryptic No", ">Daily Telegraph Cryptic No") # for DT 30109
+    html = html.replace(">Daily Telegraph No", ">Daily Telegraph Cryptic No") # for DT 30218 
+    html = html.replace(">DAILY  TELEGRAPH CRYPTIC NO", ">Daily Telegraph Cryptic No") # DT 29806
+    html = html.replace(">Daily Telegraph Cryptic No No", ">Daily Telegraph Cryptic No") # DT 29142
+    html = html.replace('<span class="Xspoiler">', '<span class="spoiler">') # DT 29142
+    html = html.replace('<span class="mrkSpoiler"', '<span class="spoiler"') # DT 28709
+    html = html.replace('> Daily Telegraph Cryptic No', '>Daily Telegraph Cryptic No') # DT 28368
+
+    html = html.replace(">Daily Telegraph Cryptic 2", ">Daily Telegraph Cryptic No 2") # for DT 30091
+    html = html.replace(">Daily Telegraph Cryptic 3", ">Daily Telegraph Cryptic No 3") # for DT 30091
     re_basic_content_start = re.compile(
-        r"""\>Daily\sTelegraph\s(?:Cryptic\s)?No.+""",
+        r"""\>Daily\sTelegraph\sCryptic\sNo.+""",
         re.VERBOSE + re.MULTILINE + re.DOTALL,
     )
 

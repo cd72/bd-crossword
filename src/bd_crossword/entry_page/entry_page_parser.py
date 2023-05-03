@@ -4,6 +4,9 @@ from dataclasses import dataclass, field
 import datetime
 
 from bs4 import BeautifulSoup
+from bs4 import NavigableString
+import json
+
 from typing import Optional
 
 from bd_crossword.entry_page import entry_page_fix_up
@@ -160,37 +163,142 @@ re_clue_line = re.compile(
 )
 
 from collections import Counter
-def parse_for_clues(html):
-    logger.debug("running...")
-    html = entry_page_fix_up.fix_up_html(html)
-    soup = get_soup(html)
+def count_clues_01(html: str):
     clues = Counter()
+    html = entry_page_fix_up.fix_up_html(html)
+
+    soup = get_soup(html)
     current_direction = None
 
-
     for paragraph in soup.select("p"):
-        #logger.debug(type(paragraph))
         logger.debug(paragraph)
-
-        logger.debug('.%s.',str(paragraph.text).strip())
         paragraph_text = str(paragraph.text).strip()
-        
-        if paragraph_text in  ["Across", "Down"]:
-            logger.debug(f"{paragraph_text} Header Found")
-            current_direction = paragraph_text
+
+        if paragraph_text.lower() in {"across", "down"}:
+            logger.debug("===== %s Header Found", paragraph_text.lower())
+            current_direction = paragraph_text.lower()
             next
 
         if current_direction is None:
             next
 
         if match := re.search(re_clue_line, str(paragraph)):
-            print("Match found")
+            logger.debug("Match found")
             clues[current_direction]+=1
         else:
-            print("no match found")
+            logger.debug("no match found")
 
 
-        #logger.debug(str(paragraph))
-
+            #logger.debug(str(paragraph))
 
     return clues
+
+re_clues = re.compile(
+    r"""
+    ^\<p\>                                # <p>
+    (
+        (Across|Down)                     # Across or Down
+        |
+        (?:\<strong\>)?                   # optional strong
+        (\d{1,2})([a|d])                  # Clue Identifier
+        (?:\<\/strong\>)?
+        \s*                               # Whitespace
+        (.+?)                             # Then anything up to the next
+    )
+    \<\/p\>                               # </p>
+""",
+    re.VERBOSE + re.DOTALL + re.MULTILINE,
+)
+def count_clues_02(html: str):
+    clue_counter = Counter()
+    html = entry_page_fix_up.fix_up_html(html)
+    current_direction = None
+    clues = re.findall(re_clues, html)
+
+    first_lines = html.split('\n')[:40]
+    logger.debug("<<<<<------- first_lines")
+    for line in first_lines:
+        logger.debug(line[:160])
+    logger.debug("<<<<<------- first_lines end")
+
+    for clue_line in clues:
+        logger.debug("iterating")
+        full_clue_html = clue_line[0]
+        direction_header = clue_line[1]
+        clue_id = int(clue_line[2]) if clue_line[2] != "" else 0
+        direction = clue_line[3]
+        logger.debug(full_clue_html)
+        logger.debug(f"{current_direction=}")
+        logger.debug(f"{direction=}")
+
+        if direction_header != "":
+            logger.debug(f"{direction_header=}")
+            if direction_header == "Across":
+                current_direction = "across"
+            elif direction_header == "Down":
+                current_direction = "down"
+            else:
+                raise ValueError(f"Direction {direction_header} is not valid")
+            continue
+
+            
+        clue_counter[current_direction] += 1
+        logger.debug("clue_counter is %s", clue_counter)
+        # logger.info(clue_counter)
+
+    return clue_counter
+
+
+
+def count_clues_03(html: str):
+    html = entry_page_fix_up.fix_up_html_03(html)
+
+    clue_lines = html.split('\n')
+    first_lines = clue_lines[:40]
+    logger.debug("<<<<<------- first_lines")
+    for line in first_lines:
+        logger.debug(line[:160])
+    logger.debug("<<<<<------- first_lines end")
+
+    clue_counter = Counter()
+    re_clues = re.compile(
+        r"""
+        (
+            (?:^(?P<direction_header>Across|Down)$)               # Across or Down
+            |
+            ^
+            (\d{1,2})([a|d])                  # Clue Identifier
+            \s*                               # Whitespace
+            (.+?)                             # The clue text
+            (\([0-9,-]+\))                    # In brackets we get the word(s) lengths 
+            \n
+            \<spoiler\>                       # <span class="spoiler">
+            \s?                               # Optional space
+            (.+?)                             # The solution
+            \s?                               # Optional space
+            \<\/spoiler\>
+            [:\.\-]?
+            \s*
+            (.+$)
+        )
+    """,
+        re.VERBOSE + re.MULTILINE,
+    )
+
+
+
+    clues = re.findall(re_clues, html)
+    logger.debug("%s", clues[0])
+    logger.debug("%s", clues[1])
+    logger.debug("%s", clues[2])
+    logger.debug("%s", clues[3])
+    logger.debug("%s", clues[4])
+    logger.debug("%s", clues[5])
+
+    logger.debug("=====================================")
+    for item in re.finditer(re_clues, html):
+        logger.debug(item.groupdict())
+        logger.debug(item["direction_header"])
+
+
+    return clue_counter
