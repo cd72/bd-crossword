@@ -259,46 +259,50 @@ def count_clues_03(html: str):
     for line in first_lines:
         logger.debug(line[:160])
     logger.debug("<<<<<------- first_lines end")
-
     clue_counter = Counter()
     re_clues = re.compile(
         r"""
         (
-            (?:^(?P<direction_header>Across|Down)$)               # Across or Down
+            (?:
+                ^
+                (?P<direction_header>Across|Down)
+                $
+            )              
             |
             ^
-            (\d{1,2})([a|d])                  # Clue Identifier
-            \s*                               # Whitespace
-            (.+?)                             # The clue text
-            (\([0-9,-]+\))                    # In brackets we get the word(s) lengths 
+            (?P<index_num>\d{1,2})
+            (?P<direction>[a|d])
+            \ *                
+            (?P<clue_text>.+?)
+            (?P<listed_solution_length>\([0-9,-]+\))                    # In brackets we get the word(s) lengths 
             \n
             \<spoiler\>                       # <span class="spoiler">
-            \s?                               # Optional space
-            (.+?)                             # The solution
-            \s?                               # Optional space
+            \ ?                               # Optional space
+            (?P<listed_solution>.+?)                             # The solution
+            \ ?                               # Optional space
             \<\/spoiler\>
             [:\.\-]?
-            \s*
-            (.+$)
+            \ *
+            (?P<hint>.+$)
         )
     """,
         re.VERBOSE + re.MULTILINE,
     )
 
 
-
-    clues = re.findall(re_clues, html)
-    logger.debug("%s", clues[0])
-    logger.debug("%s", clues[1])
-    logger.debug("%s", clues[2])
-    logger.debug("%s", clues[3])
-    logger.debug("%s", clues[4])
-    logger.debug("%s", clues[5])
-
     logger.debug("=====================================")
+    current_direction = "across"
     for item in re.finditer(re_clues, html):
+
         logger.debug(item.groupdict())
         logger.debug(item["direction_header"])
+        if item["direction_header"] is not None:
+            current_direction = item["direction_header"].lower()
+            continue
 
+        if item["direction"] is not None:
+            clue_counter[current_direction] += 1
+
+    logger.debug("clue_counter is %s", clue_counter)
 
     return clue_counter

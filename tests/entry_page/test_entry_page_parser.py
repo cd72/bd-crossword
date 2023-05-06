@@ -27,8 +27,6 @@ def crossword_index_database():
     return crossword_index.CrosswordIndex("./bd_crossword.db")
 
 
-
-
 # metadata_tests = [
 #     {
 #         "title": "DT 30231",
@@ -112,37 +110,68 @@ clues_tests = [
         "title": "DT 30276",
         "comments": "random pommers",
         "across_clues": 16,
-        "down_clues": 14
+        "down_clues": 14,
     },
     {
         "title": "DT 30270",
         "comments": "random falcon",
         "across_clues": 14,
-        "down_clues": 14
-    },    
+        "down_clues": 14,
+    },
     {
         "title": "DT 30253",
         "comments": "random Twmbarlwm",
         "across_clues": 14,
-        "down_clues": 16
+        "down_clues": 16,
     },
     {
         "title": "DT 30247",
-        "comments": "tbc",
+        "comments": "text decoration styles",
         "across_clues": 16,
-        "down_clues": 16
+        "down_clues": 16,
     },
-    # {
-    #     "title": "DT 30063",
-    #     "comments": "crazy clues like 23ac. And ",
-    #     "across_clues": 14,
-    #     "down_clues": 14
-    # }
+    {
+        "title": "DT 30258",
+        "comments": "Across Clues not Across",
+        "across_clues": 14,
+        "down_clues": 14,
+    },
+    {
+        "title": "DT 30063",
+        "comments": "daft clues like 23ac. And 8d.",
+        "across_clues": 14,
+        "down_clues": 14,
+    },
+    {
+        "title": "DT 30016",
+        "comments": "26Ac. 15ac missing close bracket, clue length on next line . in clue length, missing clue length absolute shambles",
+        "across_clues": 14,
+        "down_clues": 14,
+    },
+    {
+        "title": "DT 30075",
+        "comments": "spaces before clue ids, 15a spoiler contains hint",
+        "across_clues": 14,
+        "down_clues": 14,
+    },
+    {
+        "title": "DT 30100",
+        "comments": "no across heading",
+        "across_clues": 14,
+        "down_clues": 14,
+    },
+    {
+        "title": "DT 30180",
+        "comments": "space in clue id 9 a",
+        "across_clues": 12,
+        "down_clues": 15,
+    },
+
 ]
 
 
 @pytest.mark.parametrize("clues_test", clues_tests, ids=metadata_idfn, scope="class")
-class TestCountClues03:
+class TestClues03:
     # Arrange
     @pytest.fixture(scope="class")
     def an_index_entry(self, clues_test, crossword_index_database):
@@ -155,14 +184,12 @@ class TestCountClues03:
             an_index_entry.title, an_index_entry.url
         )
 
-    def test_across_clues(self, entry_page_html, clues_test):
-        logger.debug("Testing across clues")
+    def test_clue_count(self, entry_page_html, clues_test):
         logger.debug("id is %s", id(self))
         logger.debug("clues_test is %s", clues_test)
-        assert clues_test["across_clues"] == entry_page_parser.count_clues_03(entry_page_html)["across"]
-
-    def test_down_clues_header_found(self, entry_page_html, clues_test):
-        logger.debug("Testing down clues")
-        logger.debug("id is %s", id(self))
-        logger.debug("clues_test is %s", clues_test)
-        assert clues_test["down_clues"] == entry_page_parser.count_clues_03(entry_page_html)["down"]
+        with open("page_content.txt", "w") as file:
+            file.write(entry_page_html)
+        assert (clues_test["across_clues"], clues_test["down_clues"]) == (
+            entry_page_parser.count_clues_03(entry_page_html)["across"],
+            entry_page_parser.count_clues_03(entry_page_html)["down"],
+        )
