@@ -1,3 +1,14 @@
+# Project
+bd_crossword.db
+poetry.lock
+.vscode/
+bd_crossword.sqbpro
+bd_entry_page_cache/
+bd_entry_page_cache_old/
+development/
+error.html
+page_content.txt
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -26,6 +37,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+poetry.lock
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
