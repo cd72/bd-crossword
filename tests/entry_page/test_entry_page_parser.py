@@ -166,6 +166,19 @@ clues_tests = [
         "across_clues": 12,
         "down_clues": 15,
     },
+    {
+        "title": "DT 28218",
+        "comments": "disappearing spoiler <br> not <br/>",
+        "across_clues": 12,
+        "down_clues": 16,
+    },
+    {
+        "title": "DT 28350",
+        "comments": "Across hints by Mr Kitty, Down hints by Kitty",
+        "across_clues": 16,
+        "down_clues": 16,
+    },
+
 
 ]
 

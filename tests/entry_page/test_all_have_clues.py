@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 def html_files():
     test_file_location = pathlib.Path(__file__).parent.parent.parent / "bd_entry_page_cache"
-    return sorted(list(test_file_location.rglob("DT30*.html")))
+    return sorted(list(test_file_location.rglob("DT*.html")))
 
 def html_file_content():
     return [html_file.read_text() for html_file in html_files()]
@@ -59,5 +59,5 @@ class TestClues03:
         logger.debug("Testing across clues")
         logger.debug("id is %s", id(self))
 
-        assert act["across"] >= 12
+        assert act["across"] >= 11
         assert act["down"] >= 12

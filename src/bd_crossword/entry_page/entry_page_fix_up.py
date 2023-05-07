@@ -223,7 +223,6 @@ def fix_up_underlines(soup):
         tag.attrs = {}
         tag.name = "u"
 
-
     for tag in soup.find_all("span", class_=["DLS", "MK1"]):
         if tag.span:
             tag.span.unwrap()
@@ -238,7 +237,7 @@ def fix_up_underlines(soup):
         tag.name = "u"
     return soup
 
-def  fix_up_styles(soup):
+def fix_up_styles(soup):
     for tag in soup("span"):
         # logger.debug(tag.attrs.keys())
         if all(key in ["style", "id", "lang"] for key in tag.attrs.keys()):
@@ -324,7 +323,10 @@ def unwrap_unneeded_tags(soup):
 
 def fix_up_brs(soup):
     for tag in soup.find_all("br"):
-        tag.replace_with(NavigableString("\n"))
+        # tag.replace_with(NavigableString("\n"))
+        tag.insert_after(f"\n")
+        tag.unwrap()
+
     return soup
 
 def capitalize_match(match):
@@ -367,7 +369,26 @@ def fix_up_direction_headers(html):
         result,
     )
     logger.debug("made %d subs", number_of_subs_made)
+
+
+    re_fixup = re.compile(
+        r"""
+            ^
+            (Across|Down)
+            \ hints
+            .+
+            $
+        """,
+        re.VERBOSE + re.MULTILINE + re.IGNORECASE,
+    )
+    (result, number_of_subs_made) = re.subn(
+        re_fixup,
+        r"\1",
+        result,
+    )
+    logger.debug("'hints by' made %d subs", number_of_subs_made)
     return result
+
 
 def fix_up_daft_clue_ids(html):
     # e.g. 8ac. or 6d.
@@ -542,11 +563,19 @@ def fix_up_spaces_before_clue_ids(html):
 def fix_up_html_03(html):
     soup = BeautifulSoup(html, "html.parser")
     soup = fix_up_spoilers(soup)
+
+    
     soup = fix_up_underlines(soup)
     soup = fix_up_styles(soup)
     soup = decompose_unneeded_components(soup)
+
+
+
     soup = unwrap_unneeded_tags(soup)
     soup = fix_up_brs(soup)
+
+    with open("mid_soup_fixups.txt", "w") as file:
+        file.write(str(soup))
 
     soup.smooth()
     soup_strings = list(soup.strings)
@@ -555,8 +584,10 @@ def fix_up_html_03(html):
         if replacements > 0:
             # logger.debug("=== REPLACING ===")
             s.replace_with(new)
-
     page_content = str(soup)
+
+    with open("post_soup_fixups.txt", "w") as file:
+        file.write(page_content)
 
     page_content = page_content.replace("\xa0", " ")
     page_content = page_content.replace("’", "'")
