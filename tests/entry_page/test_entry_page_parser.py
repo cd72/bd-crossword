@@ -190,6 +190,12 @@ clues_tests = [
         "across_clues": 16,
         "down_clues": 16,
     },
+    {
+        "title": "DT 29992",
+        "comments": "hints before spoilers",
+        "across_clues": 14,
+        "down_clues": 14,
+    },
 
 
 ]

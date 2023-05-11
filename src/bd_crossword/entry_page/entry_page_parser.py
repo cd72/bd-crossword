@@ -84,7 +84,7 @@ re_clues = re.compile(
                     (?P<listed_solution>.+?)  
                     \ ? 
                 \<\/spoiler\>
-                [:\.\-]?
+                [:;\.\-]?
                 \ *
                 (?P<hint>.+$)
             |

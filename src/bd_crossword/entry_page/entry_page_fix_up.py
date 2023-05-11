@@ -29,7 +29,7 @@ def fix_up_spoilers(soup):
 
     for tag in soup.find_all("span", class_="spoiler"):
         unwrap_inner_spoiler_span(tag)
-    
+
     # <span class="km2" title="Answer"><span class="hc">
     for tag in soup.find_all("span", class_="km2", title="Answer"):
         unwrap_inner_spoiler_span(tag)
@@ -41,13 +41,14 @@ def fix_up_spoilers(soup):
     soup = workaround_for_hint_being_included_in_spoiler_tag(soup)
     return soup
 
+
 def fix_up_underlines(soup):
     def unwrap_underline_tags(tag):
         if tag.span:
             tag.span.unwrap()
         tag.attrs = {}
         tag.name = "u"
-    
+
     for tag in soup.find_all("span", style="text-decoration: underline;"):
         unwrap_underline_tags(tag)
 
@@ -76,6 +77,7 @@ def fix_up_styles(soup):
         if all(key in ["style", "id", "lang"] for key in tag.attrs.keys()):
             tag.unwrap()
     return soup
+
 
 def decompose_unneeded_components(soup):
     for element in soup(string=lambda text: isinstance(text, Comment)):
@@ -107,7 +109,7 @@ def decompose_unneeded_components(soup):
     [tag.decompose() for tag in soup("fill")]
     [tag.decompose() for tag in soup("style", type="text/css")]
     return soup
-      
+
 
 def unwrap_unneeded_tags(soup):
     [tag.unwrap() for tag in soup("strong")]
@@ -135,12 +137,18 @@ def unwrap_unneeded_tags(soup):
     [tag.unwrap() for tag in soup("span", class_="mrkSpoiler", title="hint")]
     [tag.unwrap() for tag in soup("span", class_="mrkSpoiler", title="Click here!")]
     [tag.unwrap() for tag in soup("span", class_="mrkSpoiler", title="Click here")]
-    [tag.unwrap() for tag in soup("span", class_="mrkSpoiler", title="Click here for an antelope word cloud")]
+    [
+        tag.unwrap()
+        for tag in soup(
+            "span", class_="mrkSpoiler", title="Click here for an antelope word cloud"
+        )
+    ]
     [tag.unwrap() for tag in soup("span", class_="mrkSpoiler", title="Hint")]
     [tag.unwrap() for tag in soup("span", class_="mrkSpoiler", title="this example")]
     [tag.unwrap() for tag in soup("span", class_="mrkMoveDS")]
     [tag.unwrap() for tag in soup("span", class_="mrkMoveD")]
     return soup
+
 
 def fix_up_brs(soup):
     for tag in soup.find_all("br"):
@@ -149,114 +157,75 @@ def fix_up_brs(soup):
 
     return soup
 
+
 def capitalize_match(match):
     return match.group(1).capitalize()
+
 
 def lowercase_match(match):
     return match.group(1).lower()
 
-def fix_up_direction_headers(html):
+
+def fix_up_direction_headers(result):
     re_fixup = re.compile(r"^(Across|Down) +(?:Clues)?$", re.MULTILINE)
-    (result, num_subs) = re.subn(re_fixup, r"\1", html)
+    (result, num_subs) = re.subn(re_fixup, r"\1", result)
     logger.debug("made %d subs", num_subs)
 
-    re_fixup = re.compile(r"^\s?(Across|Down)\s?$",re.MULTILINE + re.IGNORECASE)
+    re_fixup = re.compile(r"^ ?(Across|Down) ?$", re.MULTILINE + re.IGNORECASE)
     (result, num_subs) = re.subn(re_fixup, capitalize_match, result)
     logger.debug("made %d subs", num_subs)
 
-
-    re_fixup = re.compile(
-        r"""
-            ^
-            (Across|Down)
-            \ hints
-            .+
-            $
-        """,
-        re.VERBOSE + re.MULTILINE + re.IGNORECASE,
-    )
-    (result, num_subs) = re.subn(
-        re_fixup,
-        r"\1",
-        result,
-    )
+    re_fixup = re.compile(r"^(Across|Down)\ hints.+$", re.MULTILINE + re.IGNORECASE)
+    (result, num_subs) = re.subn(re_fixup, r"\1", result)
     logger.debug("'hints by' made %d subs", num_subs)
     return result
 
 
-def fix_up_daft_clue_ids(html):
+def fix_up_daft_clue_ids(result):
     # e.g. 8ac. or 6d.
-    re_fixup = re.compile(
-        r"""
-            (
-                \d{1,2}
-                [a|d|A]
-            )
-            c?
-            \.?
-            \s
-            """,
-        re.VERBOSE + re.MULTILINE,
-    )
-    (result, num_subs) = re.subn(
-        re_fixup,
-        r"\1 ",
-        html,
-    )
-    logger.debug("made %d subs", num_subs)
-    return result
-
-def fix_up_missing_close_bracket(html):
-    re_fixup = re.compile(
-        r"""
-            (
-                ^
-                \d{1,2}
-                [a|d]
-                \s
-                .+
-                \([0-9,-]+
-                $
-            )
-            """,
-        re.VERBOSE + re.MULTILINE,
-    )
-    (result, num_subs) = re.subn(
-        re_fixup,
-        r"\1)",
-        html,
-    )
+    re_fixup = re.compile(r"(\d{1,2}[a|d|A])c?\.? ", re.MULTILINE)
+    (result, num_subs) = re.subn(re_fixup, r"\1 ", result)
     logger.debug("made %d subs", num_subs)
     return result
 
 
-def fix_up_close_bracket_on_next_line(html):
-    re_fixup = re.compile(
-        r"""
-            ^
-            (
-                \d{1,2}
-                [a|d]
-                \s
-                .+
+def fix_up_missing_close_bracket(result):
+    re_fixup = re.compile(r"(^\d{1,2}[a|d] .+\([0-9,-]+$)", re.MULTILINE)
+    (result, num_subs) = re.subn(re_fixup, r"\1)", result)
+    logger.debug("made %d subs", num_subs)
+    return result
+
+
+def fix_up_close_bracket_on_next_line(result):
+    re_fixup = re.compile(r"""
+        ^(\d{1,2}[a|d]\s.+)\n
+        (\([0-9,-]\))\n
+    """, re.VERBOSE + re.MULTILINE)
+    (result, num_subs) = re.subn(re_fixup, r"\1\2\n", result)
+    logger.debug("made %d subs", num_subs)
+    return result
+
+def fix_up_hint_before_spoiler(result):
+    re_fixup = re.compile(r"""
+            ^(\d{1,2}[a|d].+\([0-9,-]+\)\n)
+            (?<!\<spoiler)
+            (.+\n
+                (?:
+                    (?<!\<spoiler).+
+                )?\n?
             )
-            \n
-            (
-                \([0-9,-]\)
-            )
-            \n
+            (\<spoiler\>.+[:;])\n
             """,
         re.VERBOSE + re.MULTILINE,
     )
-    (result, num_subs) = re.subn(
-        re_fixup,
-        r"\1\2\n",
-        html,
+    (result, num_subs) = re.subn(re_fixup, r"\1\3\2",
+        result,
     )
     logger.debug("made %d subs", num_subs)
     return result
 
-def fix_up_uppercase_directions(html):
+
+def fix_up_uppercase_directions(result):
     # e.g. 8A
     re_fixup = re.compile(
         r"""
@@ -272,12 +241,13 @@ def fix_up_uppercase_directions(html):
     (result, num_subs) = re.subn(
         re_fixup,
         lowercase_match,
-        html,
+        result,
     )
     logger.debug("made %d subs", num_subs)
     return result
 
-def fix_up_dot_in_clue_length(html):
+
+def fix_up_dot_in_clue_length(result):
     # e.g. (6.6)
     re_fixup = re.compile(
         r"""
@@ -299,12 +269,13 @@ def fix_up_dot_in_clue_length(html):
     (result, num_subs) = re.subn(
         re_fixup,
         r"\1\2,\3)",
-        html,
+        result,
     )
     logger.debug("made %d subs", num_subs)
     return result
 
-def fix_up_missing_clue_length(html):
+
+def fix_up_missing_clue_length(result):
     re_fixup = re.compile(
         r"""
             ^
@@ -325,12 +296,13 @@ def fix_up_missing_clue_length(html):
     (result, num_subs) = re.subn(
         re_fixup,
         r"\1 (0)\n\2",
-        html,
+        result,
     )
     logger.debug("made %d subs", num_subs)
     return result
 
-def fix_up_spaces_before_clue_ids(html):
+
+def fix_up_spaces_before_clue_ids(result):
     re_fixup = re.compile(
         r"""
             ^
@@ -349,21 +321,19 @@ def fix_up_spaces_before_clue_ids(html):
     (result, num_subs) = re.subn(
         re_fixup,
         r"\1\2 ",
-        html,
+        result,
     )
     logger.debug("made %d subs", num_subs)
     return result
+
 
 def fix_up_html_03(html):
     soup = BeautifulSoup(html, "html.parser")
     soup = fix_up_spoilers(soup)
 
-    
     soup = fix_up_underlines(soup)
     soup = fix_up_styles(soup)
     soup = decompose_unneeded_components(soup)
-
-
 
     soup = unwrap_unneeded_tags(soup)
     soup = fix_up_brs(soup)
@@ -415,8 +385,9 @@ def fix_up_html_03(html):
     page_content = fix_up_dot_in_clue_length(page_content)
     page_content = fix_up_missing_clue_length(page_content)
     page_content = fix_up_spaces_before_clue_ids(page_content)
-    
-    # with open("page_content.txt", "w") as file:
-    #     file.write(page_content)
+    page_content = fix_up_hint_before_spoiler(page_content)
+
+    with open("page_content.txt", "w") as file:
+        file.write(page_content)
 
     return page_content
