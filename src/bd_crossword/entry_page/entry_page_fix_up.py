@@ -3,174 +3,30 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-
-def fix_up_direction_header_with_no_paragraph(html):
-    re_search = re.compile(
-        r"""
-            (
-            \<p\>
-            \s*
-            Across|Down
-            \s*
-            )
-            \<br\s*\/\>
-            \n
-            (
-            \d{1,2}[a|d]
-            )
-    """,
-        re.VERBOSE + re.DOTALL + re.MULTILINE,
-    )
-
-    re_replace = r"""\1</p>\n<p>\2"""
-
-    (result, number_of_subs_made) = re.subn(re_search, re_replace, html)
-    logger.debug(
-        "fix_up_direction_header_with_no_paragraph made %d subs", number_of_subs_made
-    )
-
-    return result
-
-
-def fix_up_mrk_clue_ids(html):
-    re_mrk_clue_id = re.compile(
-        r"""
-        <span\ id="c\d{1,2}[a|d]">
-        </span>
-        <strong>
-        (\d{1,2})([a|d])
-        </strong>
-        """,
-        re.VERBOSE,
-    )
-    (result, number_of_subs_made) = re.subn(re_mrk_clue_id, r"\1\2", html)
-    logger.debug("fix_up_mrk_clue_ids made %d subs", number_of_subs_made)
-    return result
-
-
-def fix_up_spoilers_regex(html):
-    html = html.replace(
-        '<span class="km2" title="Answer"><span class="hc">',
-        '<span class="spoiler"><span class="hidden-content">',
-    )
-
-    (result, number_of_subs_made) = re.subn(
-        r'\<span\ class="spoiler"\>\<span\ class="hidden-content"\>(.+?)\<\/span\>\<\/span\>',
-        r'<span class="spoiler">\1</span>',
-        html,
-    )
-    logger.debug("fix_up_spoilers made %d subs", number_of_subs_made)
-
-    return result
-
-
-# <p><strong>Across</strong> </p
-def fix_up_direction_headers_strong(html):
-    re_fixup_direction_headers = re.compile(
-        r"""
-            \<p\>
-            \<strong\>
-            (Across|Down)
-            .{0,10}?
-            \</strong\>
-            \s??                                 # Optional space
-            \</p\>
-            """,
-        re.VERBOSE + re.MULTILINE + re.DOTALL,
-    )
-    (result, number_of_subs_made) = re.subn(
-        re_fixup_direction_headers,
-        r"<p>\1</p>",
-        html,
-    )
-    logger.debug("made %d subs", number_of_subs_made)
-    return result
-
-
-def fix_up_direction_headers_b(html):
-    re_fixup_direction_headers = re.compile(
-        r"""
-            \<p\>
-            \<b\>
-            (Across|Down)
-            .{0,10}?
-            \</b\>
-            \s??                                 # Optional space
-            \</p\>
-            """,
-        re.VERBOSE + re.MULTILINE + re.DOTALL,
-    )
-    (result, number_of_subs_made) = re.subn(
-        re_fixup_direction_headers,
-        r"<p>\1</p>",
-        html,
-    )
-    logger.debug("made %d subs", number_of_subs_made)
-    return result
-
-
-def fix_up_mrk_clue_id_span(html):
-    r = re.compile(
-        r"""<span\ id="c\d{1,2}[a|d]"></span>""",
-        re.VERBOSE + re.MULTILINE + re.DOTALL,
-    )
-    (result, number_of_subs) = re.subn(r, "", html)
-    logger.debug("%s made %d subs", __name__, number_of_subs)
-
-    result = result.replace('<span id="AcrossClues"></span>', "")
-    result = result.replace('<span id="DownClues"></span>', "")
-
-    return result
-
-
-def fix_up_helvetica_span(html):
-    r = re.compile(
-        r"""\<span style=\"font-family: helvetica, arial, sans-serif;\"\>(.+?)\<\/span\>""",
-        re.MULTILINE + re.DOTALL,
-    )
-    (result, number_of_subs) = re.subn(r, r"\1", html)
-    logger.debug("made %d subs", number_of_subs)
-
-    return result
-
-
-def fix_up_color_span(html):
-    r = re.compile(
-        r"""\<span\sstyle=\"color:\s\#0000ff;\"\>(.+?)\<\/span\>""",
-        re.VERBOSE + re.MULTILINE + re.DOTALL,
-    )
-
-    (result, number_of_subs) = re.subn(r, r"\1", html)
-    logger.debug("made %d subs", number_of_subs)
-
-    return result
-
-
-def fix_up_html(html):
-    html = fix_up_direction_headers_strong(html)
-    html = fix_up_direction_headers_b(html)
-    html = fix_up_mrk_clue_ids(html)
-    html = fix_up_spoilers_regex(html)
-    html = fix_up_mrk_clue_id_span(html)
-    html = fix_up_color_span(html)
-    html = fix_up_helvetica_span(html)
-    html = fix_up_direction_header_with_no_paragraph(html)
-
-    return html
-
-
 from bs4 import BeautifulSoup
 from bs4 import NavigableString
 from bs4 import Comment
 
-def unwrap_inner_spoiler_span(tag):
-    if tag.span:
-        tag.span.unwrap()
-    tag.attrs = {}
-    tag.name = "spoiler"
-
 
 def fix_up_spoilers(soup):
+    def workaround_for_hint_being_included_in_spoiler_tag(soup):
+        # e.g. DT-30075
+        for tag in soup("spoiler"):
+            logger.debug(tag.string)
+            if tag.string is not None and ":" in tag.string:
+                (solution, colon, hint) = tag.string.partition(":")
+                logger.debug("solution is %s", solution)
+                logger.debug("hint is %s", hint)
+                tag.string = solution
+                tag.insert_after(f":{hint}")
+        return soup
+
+    def unwrap_inner_spoiler_span(tag):
+        if tag.span:
+            tag.span.unwrap()
+        tag.attrs = {}
+        tag.name = "spoiler"
+
     for tag in soup.find_all("span", class_="spoiler"):
         unwrap_inner_spoiler_span(tag)
     
@@ -182,66 +38,42 @@ def fix_up_spoilers(soup):
     for tag in soup.find_all("span", class_="mrkSpoiler", title="Answer"):
         unwrap_inner_spoiler_span(tag)
 
-    for tag in soup("spoiler"):
-        logger.debug(tag.string)
-        if tag.string is not None and ":" in tag.string:
-            (solution, colon, hint) = tag.string.partition(":")
-            logger.debug("solution is %s", solution)
-            logger.debug("solution type is %s", type(solution))
-            logger.debug("hint is %s", hint)
-            logger.debug("hint type is %s", type(hint))
-            tag.string = solution
-            tag.insert_after(f":{hint}")
-            # assert 1 == 0
-
+    soup = workaround_for_hint_being_included_in_spoiler_tag(soup)
     return soup
 
 def fix_up_underlines(soup):
-    for tag in soup.find_all(
-        "span", style="text-decoration: underline;"
-    ):  # , class_="spoiler"):
+    def unwrap_underline_tags(tag):
+        if tag.span:
+            tag.span.unwrap()
         tag.attrs = {}
         tag.name = "u"
+    
+    for tag in soup.find_all("span", style="text-decoration: underline;"):
+        unwrap_underline_tags(tag)
 
     # <span class="dls mk1"><span class="mk0">
     for tag in soup.find_all("span", class_=["dls", "mk1"]):
-        if tag.span:
-            tag.span.unwrap()
-        tag.attrs = {}
-        tag.name = "u"
+        unwrap_underline_tags(tag)
 
     # <span class="mrkUnderS solid"><span class="mrkMoveS">
     for tag in soup.find_all("span", class_=["mrkUnderS", "solid"]):
-        if tag.span:
-            tag.span.unwrap()
-        tag.attrs = {}
-        tag.name = "u"
+        unwrap_underline_tags(tag)
 
     for tag in soup.find_all("span", class_=["mrkUnderD", "dot"]):
-        if tag.span:
-            tag.span.unwrap()
-        tag.attrs = {}
-        tag.name = "u"
+        unwrap_underline_tags(tag)
 
     for tag in soup.find_all("span", class_=["DLS", "MK1"]):
-        if tag.span:
-            tag.span.unwrap()
-        tag.attrs = {}
-        tag.name = "u"
+        unwrap_underline_tags(tag)
 
     # <span class="MRKUNDERS SOLID"><span class="MRKMOVES"
     for tag in soup.find_all("span", class_=["MRKUNDERS", "SOLID"]):
-        if tag.span:
-            tag.span.unwrap()
-        tag.attrs = {}
-        tag.name = "u"
+        unwrap_underline_tags(tag)
     return soup
+
 
 def fix_up_styles(soup):
     for tag in soup("span"):
-        # logger.debug(tag.attrs.keys())
         if all(key in ["style", "id", "lang"] for key in tag.attrs.keys()):
-            logger.debug("Removing style %s from tag %s", tag.attrs, tag.name)
             tag.unwrap()
     return soup
 
@@ -299,18 +131,7 @@ def unwrap_unneeded_tags(soup):
     [tag.unwrap() for tag in soup("span", class_=["dash", "pbSD"])]
     [tag.unwrap() for tag in soup("span", class_="km4")]
     [tag.unwrap() for tag in soup("span", class_="hsa")]
-    # [tag.unwrap() for tag in soup("span", class_="km2", title="hinty example")]
-    # [tag.unwrap() for tag in soup("span", class_="km2", title="Hint")]
-    # [tag.unwrap() for tag in soup("span", class_="km2", title="explanation")]
-    # [tag.unwrap() for tag in soup("span", class_="km2", title="word")]
-    # [tag.unwrap() for tag in soup("span", class_="km2", title="synonym")]
-    # [tag.unwrap() for tag in soup("span", class_="km2", title="Click here!")]
-    # [tag.unwrap() for tag in soup("span", class_="km2", title="Pun")]
-    # [tag.unwrap() for tag in soup("span", class_="km2", title="Warning: contains answer")]
-    # [tag.unwrap() for tag in soup("span", class_="km2", title="spoiler")]
-    # [tag.unwrap() for tag in soup("span", class_="km2", title="hint")]
     [tag.unwrap() for tag in soup("span", class_="km2")]
-
     [tag.unwrap() for tag in soup("span", class_="mrkSpoiler", title="hint")]
     [tag.unwrap() for tag in soup("span", class_="mrkSpoiler", title="Click here!")]
     [tag.unwrap() for tag in soup("span", class_="mrkSpoiler", title="Click here")]
@@ -323,7 +144,6 @@ def unwrap_unneeded_tags(soup):
 
 def fix_up_brs(soup):
     for tag in soup.find_all("br"):
-        # tag.replace_with(NavigableString("\n"))
         tag.insert_after(f"\n")
         tag.unwrap()
 
@@ -336,39 +156,13 @@ def lowercase_match(match):
     return match.group(1).lower()
 
 def fix_up_direction_headers(html):
-    re_fixup_direction_headers = re.compile(
-        r"""
-            ^
-            (Across|Down)
-            \ +
-            (?:Clues)?
-            $
-        """,
-        re.VERBOSE + re.MULTILINE,
-    )
-    (result, number_of_subs_made) = re.subn(
-        re_fixup_direction_headers,
-        r"\1",
-        html,
-    )
-    logger.debug("made %d subs", number_of_subs_made)
+    re_fixup = re.compile(r"^(Across|Down) +(?:Clues)?$", re.MULTILINE)
+    (result, num_subs) = re.subn(re_fixup, r"\1", html)
+    logger.debug("made %d subs", num_subs)
 
-    re_fixup_direction_headers = re.compile(
-        r"""
-            ^
-            \s?
-            (Across|Down)
-            \s?
-            $
-        """,
-        re.VERBOSE + re.MULTILINE + re.IGNORECASE,
-    )
-    (result, number_of_subs_made) = re.subn(
-        re_fixup_direction_headers,
-        capitalize_match,
-        result,
-    )
-    logger.debug("made %d subs", number_of_subs_made)
+    re_fixup = re.compile(r"^\s?(Across|Down)\s?$",re.MULTILINE + re.IGNORECASE)
+    (result, num_subs) = re.subn(re_fixup, capitalize_match, result)
+    logger.debug("made %d subs", num_subs)
 
 
     re_fixup = re.compile(
@@ -381,12 +175,12 @@ def fix_up_direction_headers(html):
         """,
         re.VERBOSE + re.MULTILINE + re.IGNORECASE,
     )
-    (result, number_of_subs_made) = re.subn(
+    (result, num_subs) = re.subn(
         re_fixup,
         r"\1",
         result,
     )
-    logger.debug("'hints by' made %d subs", number_of_subs_made)
+    logger.debug("'hints by' made %d subs", num_subs)
     return result
 
 
@@ -404,12 +198,12 @@ def fix_up_daft_clue_ids(html):
             """,
         re.VERBOSE + re.MULTILINE,
     )
-    (result, number_of_subs_made) = re.subn(
+    (result, num_subs) = re.subn(
         re_fixup,
         r"\1 ",
         html,
     )
-    logger.debug("made %d subs", number_of_subs_made)
+    logger.debug("made %d subs", num_subs)
     return result
 
 def fix_up_missing_close_bracket(html):
@@ -427,12 +221,12 @@ def fix_up_missing_close_bracket(html):
             """,
         re.VERBOSE + re.MULTILINE,
     )
-    (result, number_of_subs_made) = re.subn(
+    (result, num_subs) = re.subn(
         re_fixup,
         r"\1)",
         html,
     )
-    logger.debug("made %d subs", number_of_subs_made)
+    logger.debug("made %d subs", num_subs)
     return result
 
 
@@ -454,12 +248,12 @@ def fix_up_close_bracket_on_next_line(html):
             """,
         re.VERBOSE + re.MULTILINE,
     )
-    (result, number_of_subs_made) = re.subn(
+    (result, num_subs) = re.subn(
         re_fixup,
         r"\1\2\n",
         html,
     )
-    logger.debug("made %d subs", number_of_subs_made)
+    logger.debug("made %d subs", num_subs)
     return result
 
 def fix_up_uppercase_directions(html):
@@ -475,12 +269,12 @@ def fix_up_uppercase_directions(html):
             """,
         re.VERBOSE + re.MULTILINE,
     )
-    (result, number_of_subs_made) = re.subn(
+    (result, num_subs) = re.subn(
         re_fixup,
         lowercase_match,
         html,
     )
-    logger.debug("made %d subs", number_of_subs_made)
+    logger.debug("made %d subs", num_subs)
     return result
 
 def fix_up_dot_in_clue_length(html):
@@ -502,12 +296,12 @@ def fix_up_dot_in_clue_length(html):
             """,
         re.VERBOSE + re.MULTILINE,
     )
-    (result, number_of_subs_made) = re.subn(
+    (result, num_subs) = re.subn(
         re_fixup,
         r"\1\2,\3)",
         html,
     )
-    logger.debug("made %d subs", number_of_subs_made)
+    logger.debug("made %d subs", num_subs)
     return result
 
 def fix_up_missing_clue_length(html):
@@ -528,12 +322,12 @@ def fix_up_missing_clue_length(html):
             """,
         re.VERBOSE + re.MULTILINE,
     )
-    (result, number_of_subs_made) = re.subn(
+    (result, num_subs) = re.subn(
         re_fixup,
         r"\1 (0)\n\2",
         html,
     )
-    logger.debug("made %d subs", number_of_subs_made)
+    logger.debug("made %d subs", num_subs)
     return result
 
 def fix_up_spaces_before_clue_ids(html):
@@ -552,12 +346,12 @@ def fix_up_spaces_before_clue_ids(html):
         """,
         re.VERBOSE + re.MULTILINE,
     )
-    (result, number_of_subs_made) = re.subn(
+    (result, num_subs) = re.subn(
         re_fixup,
         r"\1\2 ",
         html,
     )
-    logger.debug("made %d subs", number_of_subs_made)
+    logger.debug("made %d subs", num_subs)
     return result
 
 def fix_up_html_03(html):
@@ -574,8 +368,8 @@ def fix_up_html_03(html):
     soup = unwrap_unneeded_tags(soup)
     soup = fix_up_brs(soup)
 
-    with open("mid_soup_fixups.txt", "w") as file:
-        file.write(str(soup))
+    # with open("mid_soup_fixups.txt", "w") as file:
+    #     file.write(str(soup))
 
     soup.smooth()
     soup_strings = list(soup.strings)
@@ -586,8 +380,8 @@ def fix_up_html_03(html):
             s.replace_with(new)
     page_content = str(soup)
 
-    with open("post_soup_fixups.txt", "w") as file:
-        file.write(page_content)
+    # with open("post_soup_fixups.txt", "w") as file:
+    #     file.write(page_content)
 
     page_content = page_content.replace("\xa0", " ")
     page_content = page_content.replace("’", "'")
@@ -622,7 +416,7 @@ def fix_up_html_03(html):
     page_content = fix_up_missing_clue_length(page_content)
     page_content = fix_up_spaces_before_clue_ids(page_content)
     
-    with open("page_content.txt", "w") as file:
-        file.write(page_content)
+    # with open("page_content.txt", "w") as file:
+    #     file.write(page_content)
 
     return page_content

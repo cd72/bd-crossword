@@ -178,6 +178,18 @@ clues_tests = [
         "across_clues": 16,
         "down_clues": 16,
     },
+    {
+        "title": "DT 30078",
+        "comments": "Composite Down Clue",
+        "across_clues": 16,
+        "down_clues": 14,
+    },
+    {
+        "title": "DT 30295",
+        "comments": "just numbers, no a or d in the clue ids",
+        "across_clues": 16,
+        "down_clues": 16,
+    },
 
 
 ]

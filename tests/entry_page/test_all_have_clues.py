@@ -17,36 +17,6 @@ def title_name():
     return [f.name for f in html_files()]
 
 @pytest.mark.parametrize("html", html_file_content(), ids=title_name(), scope="class")
-class TestClues01:
-    @pytest.fixture(scope="class", autouse=True)
-    def act(self, html: str):
-        logger.debug("Act")
-        logger.debug("id is %s", id(self))
-
-        return entry_page_parser.count_clues_01(html)
-
-    def test_across_clues_header_found(self, act):
-        logger.debug("Testing across clues")
-        logger.debug("id is %s", id(self))
-
-        assert act["across"] >= 12
-
-@pytest.mark.parametrize("html", html_file_content(), ids=title_name(), scope="class")
-class TestClues02:
-    @pytest.fixture(scope="class", autouse=True)
-    def act(self, html: str):
-        logger.debug("Act")
-        logger.debug("id is %s", id(self))
-
-        return entry_page_parser.count_clues_02(html)
-
-    def test_across_clues_header_found(self, act):
-        logger.debug("Testing across clues")
-        logger.debug("id is %s", id(self))
-
-        assert act["across"] >= 12
-
-@pytest.mark.parametrize("html", html_file_content(), ids=title_name(), scope="class")
 class TestClues03:
     @pytest.fixture(scope="class", autouse=True)
     def act(self, html: str):
