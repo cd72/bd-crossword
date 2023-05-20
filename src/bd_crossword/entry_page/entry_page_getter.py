@@ -72,7 +72,11 @@ def simplify_html(html: str):
         raise ValueError("Could not match re_basic_content_start, see error.html")
 
     re_basic_content_end = re.compile(
-        """.+class="spoiler".+?\n|<.+title="Answer.+?\n""", re.VERBOSE + re.MULTILINE + re.DOTALL
+        f"""
+        .+
+        class="spoiler".+?\n|
+        <.+title="Answer.+?\n
+        """, re.VERBOSE + re.MULTILINE + re.DOTALL
     )
     if match := re.search(re_basic_content_end, html):
         html = match.group()

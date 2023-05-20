@@ -166,6 +166,12 @@ def lowercase_match(match):
     return match.group(1).lower()
 
 
+def fix_up_leading_and_trailing_spaces(result):
+    re_fixup = re.compile(r"^ *(.+) *$", re.MULTILINE)
+    (result, num_subs) = re.subn(re_fixup, r"\1", result)
+    logger.debug("made %d subs", num_subs)
+    return result
+
 def fix_up_direction_headers(result):
     re_fixup = re.compile(r"^(Across|Down) +(?:Clues)?$", re.MULTILINE)
     (result, num_subs) = re.subn(re_fixup, r"\1", result)
@@ -178,6 +184,11 @@ def fix_up_direction_headers(result):
     re_fixup = re.compile(r"^(Across|Down)\ hints.+$", re.MULTILINE + re.IGNORECASE)
     (result, num_subs) = re.subn(re_fixup, r"\1", result)
     logger.debug("'hints by' made %d subs", num_subs)
+
+    re_fixup = re.compile(r"^Drown$", re.MULTILINE)
+    (result, num_subs) = re.subn(re_fixup, "Down", result)
+    logger.debug("made %d subs", num_subs)
+
     return result
 
 
@@ -350,8 +361,6 @@ def fix_up_html_03(html):
             s.replace_with(new)
     page_content = str(soup)
 
-    # with open("post_soup_fixups.txt", "w") as file:
-    #     file.write(page_content)
 
     page_content = page_content.replace("\xa0", " ")
     page_content = page_content.replace("’", "'")
@@ -377,7 +386,12 @@ def fix_up_html_03(html):
     page_content = page_content.replace("−", "-")
     page_content = page_content.replace("´", "'")
     page_content = page_content.replace("‟", '"')
+    page_content = fix_up_leading_and_trailing_spaces(page_content)
+    # with open("post_soup_fixups.txt", "w") as file:
+    #     file.write(page_content)
     page_content = fix_up_direction_headers(page_content)
+    # with open("page_content.txt", "w") as file:
+    #     file.write(page_content)
     page_content = fix_up_daft_clue_ids(page_content)
     page_content = fix_up_missing_close_bracket(page_content)
     page_content = fix_up_close_bracket_on_next_line(page_content)
@@ -387,7 +401,5 @@ def fix_up_html_03(html):
     page_content = fix_up_spaces_before_clue_ids(page_content)
     page_content = fix_up_hint_before_spoiler(page_content)
 
-    with open("page_content.txt", "w") as file:
-        file.write(page_content)
 
     return page_content

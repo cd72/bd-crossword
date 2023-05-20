@@ -196,7 +196,24 @@ clues_tests = [
         "across_clues": 14,
         "down_clues": 14,
     },
-
+    {
+        "title": "DT 29931",
+        "comments": "Direction Drown",
+        "across_clues": 14,
+        "down_clues": 14,
+    },
+    {
+        "title": "DT 28903",
+        "comments": "Leading spaces on spoiler lines",
+        "across_clues": 14,
+        "down_clues": 16,
+    },
+    {
+        "title": "DT 28742",
+        "comments": "no clues from entry page getter",
+        "across_clues": 14,
+        "down_clues": 14,
+    },
 
 ]
 
