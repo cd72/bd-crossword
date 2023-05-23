@@ -1,6 +1,5 @@
 import logging
 import re
-from dataclasses import dataclass, field
 import datetime
 
 from bs4 import BeautifulSoup
@@ -10,49 +9,12 @@ import json
 from typing import Optional
 
 from bd_crossword.entry_page import entry_page_fix_up
+from bd_crossword.common.crossword_clues import CrosswordClue, CrosswordClues
 from collections import Counter
 
 # from bd_crossword.common import crossword_index, index_entry
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass(order=True)
-class CrosswordClue:
-    """Class for keeping track of individual crossword clue information"""
-
-    sort_index: str = field(init=False, repr=False)
-    clue_id: int
-    direction: str
-    clue_text: str
-    listed_solution: Optional[str] = None
-    listed_solution_length: Optional[str] = None
-    actual_solution: Optional[str] = None
-    actual_solution_length: Optional[str] = None
-    hint: Optional[str] = None
-    begins_with: Optional[str] = None
-    cp: bool = False  # Composite Placeholder
-    cp_pointer_clue_id: Optional[int] = None  # What the composite placeholder points to
-    cp_pointer_direction: Optional[str] = None
-    cm: bool = False  # Composite Main
-    cm_pointer_clue_id: Optional[int] = None  # What the composite main points to
-    cm_pointer_direction: Optional[str] = None
-
-    def __post_init__(self):
-        self.sort_index = f"{self.direction}{int(self.clue_id):02d}"
-
-
-@dataclass
-class Crossword:
-    title: str = None
-    hints_author: str = None
-    difficulty: float = None
-    enjoyment: float = None
-    url: Optional[str] = None
-    puzzle_date: Optional[datetime.date] = None
-    across_clues: Optional[dict[int, CrosswordClue]] = None
-    down_clues: Optional[dict[int, CrosswordClue]] = None
-    clues: Optional[list[CrosswordClue]] = None
 
 
 re_clues = re.compile(
@@ -76,7 +38,7 @@ re_clues = re.compile(
                     (?P<cp_pointer_direction>Across|Down|a|d)
                     \ *
                 )?                
-                (?P<clue_text>.+?)
+                (?P<clue_text>.+?)\ *
                 (?P<listed_solution_length>\([0-9,-]+\))    # In brackets we get the word(s) lengths 
                 \n
                 \<spoiler\>
@@ -105,30 +67,80 @@ re_clues = re.compile(
     re.VERBOSE + re.MULTILINE,
 )
 
-def count_clues_03(html: str):
-    html = entry_page_fix_up.fix_up_html_03(html)
-
+def log_first_lines(html) -> None:
     clue_lines = html.split('\n')
     first_lines = clue_lines[:40]
     logger.debug("<<<<<------- first_lines")
     for line in first_lines:
         logger.debug(line[:160])
     logger.debug("<<<<<------- first_lines end")
-    clue_counter = Counter()
-
-
     logger.debug("=====================================")
+
+def generate_clue(reg_match: re.match) -> CrosswordClue:
+    result = CrosswordClue(
+        clue_id=int(reg_match["index_num"]),
+        direction=reg_match["direction"],
+        clue_text=reg_match["clue_text"],
+        listed_solution=reg_match["listed_solution"],
+        listed_solution_length=reg_match["listed_solution_length"],
+        hint=reg_match["hint"],
+    )
+    if reg_match["cp_pointer_clue_id"] is not None:
+        result.cp = True
+        result.cp_pointer_clue_id = reg_match["cp_pointer_clue_id"]
+        result.cp_pointer_direction = reg_match["cp_pointer_direction"]
+
+    if reg_match["cm_pointer_clue_id"] is not None:
+        result.cm = True
+        result.cm_pointer_clue_id = reg_match["cm_pointer_clue_id"]
+        result.cm_pointer_direction = reg_match["cm_pointer_clue_direction"]
+
+    return result
+
+
+def parse_basic_clues(html: str) -> dict:
+    log_first_lines(html)
+
+
+    crossword_clues = CrosswordClues(across={}, down={})
+
     current_direction = "across"
     for item in re.finditer(re_clues, html):
-
         logger.debug(item.groupdict())
-        # logger.debug(item["direction_header"])
         if item["direction_header"] is not None:
             current_direction = item["direction_header"].lower()
             continue
 
-        clue_counter[current_direction] += 1
+        getattr(crossword_clues, current_direction)[int(item["index_num"])] = generate_clue(item)
 
-    logger.debug("clue_counter is %s", clue_counter)
 
-    return clue_counter
+    # logger.debug("clue_counter is %s", clue_counter)
+
+    return crossword_clues
+
+def get_start_letters(string: str) -> str:
+    # logger.debug(f"{string=}")
+    words = string.replace("-", " ").split(" ")
+    # logger.debug(f"{words=}")
+    start_letters = [word[0] for word in words]
+    start_letters = ",".join(start_letters)
+    return start_letters
+
+def enrich_clues(crossword_clues: CrosswordClues) -> CrosswordClues:
+    for direction in ("across", "down"):
+        for clue_id, clue in getattr(crossword_clues, direction).items():
+            if clue.listed_solution is None:
+                continue
+            clue.actual_solution = re.sub(r"[ \-’]", "", clue.listed_solution)
+            clue.actual_solution_length = len(clue.actual_solution)
+            clue.solution_start_letters = get_start_letters(clue.listed_solution)
+
+    return crossword_clues
+
+def parse_entry_page(html: str) -> dict:
+    html = entry_page_fix_up.fix_up_html_03(html)
+    crossword_clues = parse_basic_clues(html)
+    crossword_clues = enrich_clues(crossword_clues)
+
+    return crossword_clues
+
