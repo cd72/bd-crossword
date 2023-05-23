@@ -35,6 +35,8 @@ mypy = "^1.0.1"
 types-beautifulsoup4 = "^4.11.6.7"
 notebook = "^6.5.3"
 jupyter-black = "^0.3.3"
+pytest-html = "^3.2.0"
+ansi2html = "^1.8.0"
 
 [build-system]
 requires = ["poetry-core"]
