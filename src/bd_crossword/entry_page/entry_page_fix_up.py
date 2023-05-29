@@ -12,7 +12,6 @@ def fix_up_spoilers(soup):
     def workaround_for_hint_being_included_in_spoiler_tag(soup):
         # e.g. DT-30075
         for tag in soup("spoiler"):
-            logger.debug(tag.string)
             if tag.string is not None and ":" in tag.string:
                 (solution, colon, hint) = tag.string.partition(":")
                 logger.debug("solution is %s", solution)

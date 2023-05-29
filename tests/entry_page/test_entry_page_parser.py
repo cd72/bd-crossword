@@ -229,6 +229,7 @@ class TestClueContent:
             file.write(entry_page_html)
 
         test_result = entry_page_parser.parse_entry_page(entry_page_html)
+        print(repr(test_result))
         # logger.debug("test_result is %s", test_result)
         expected_result = clues_test["content"]
         actual_result = getattr(test_result, clues_test["direction"])[clues_test["clue_id"]]

@@ -1,5 +1,5 @@
 import pytest
-from bd_crossword.common.grid import CrosswordGrid
+from bd_crossword.common.crossword_grid import CrosswordGrid
 
 @pytest.fixture
 def crossword_grid():

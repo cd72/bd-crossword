@@ -9,7 +9,8 @@ logger = logging.getLogger(__name__)
 class CrosswordClue:
     """Class for keeping track of individual crossword clue information"""
 
-    sort_index: str = field(init=False, repr=False)
+    by_direction_sort_index: str = field(init=False, repr=False)
+    by_number_sort_index: str = field(init=False, repr=False)
     clue_id: int
     direction: str
     clue_text: str
@@ -27,7 +28,8 @@ class CrosswordClue:
     cm_pointer_direction: Optional[str] = None
 
     def __post_init__(self):
-        self.sort_index = f"{self.direction}{int(self.clue_id):02d}"
+        self.by_direction_sort_index = f"{self.direction}{int(self.clue_id):02d}"
+        self.by_number_sort_index = f"{int(self.clue_id):02d}{self.direction}"
 
 
 # @dataclass
@@ -47,3 +49,12 @@ class CrosswordClue:
 class CrosswordClues:
     across: dict[int, CrosswordClue]
     down: dict[int, CrosswordClue]
+
+    def by_number_sorted_clues(self):
+        all_clues = list(self.across.values()) + list(self.down.values())
+        # ensure all_clues is sorted by first clue_id as primary sort key then by direction as a secondary sort key
+        all_clues.sort(key=lambda clue: clue.by_number_sort_index)
+        return all_clues
+        
+
+
