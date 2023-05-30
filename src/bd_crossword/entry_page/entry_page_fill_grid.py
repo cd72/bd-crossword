@@ -23,12 +23,18 @@ class FillGrid:
             for try_num in range(35):
                 logger.debug("%s%s %s, r%sc%s, try is %s", clue_id, direction, word, self.row, self.col, try_num)
 
+                grid_savepoint = self.deep_copy()
                 if self.grid.write_direction(self.row, self.col, word, direction, clue_id):
                     logger.debug("now grid is %s", self.grid.text_grid())
-                    new_fill_grid = self.deep_copy()
-                    if new_fill_grid := new_fill_grid.fill_grid():
-                        logger.debug("returned new_fill_grid back to us with content %s", new_fill_grid.grid.text_grid())
-                        return new_fill_grid
+                    if self.fill_grid():
+                        logger.debug("returned fill_grid back to us with content %s", self.grid.text_grid())
+                        return self
+                    else:
+                        logger.debug("fill_grid returned False, so we restore the grid to %s", grid_savepoint.grid.text_grid())
+                        self.grid = grid_savepoint.grid.deep_copy()
+                        self.clues = list(grid_savepoint.clues)
+                        self.row = grid_savepoint.row
+                        self.col = grid_savepoint.col
 
 
                 self.move_to_next_square()

@@ -131,7 +131,7 @@ def enrich_clues(crossword_clues: CrosswordClues) -> CrosswordClues:
         for clue_id, clue in getattr(crossword_clues, direction).items():
             if clue.listed_solution is None:
                 continue
-            clue.actual_solution = re.sub(r"[ \-’]", "", clue.listed_solution)
+            clue.actual_solution = re.sub(r"[ \-’']", "", clue.listed_solution)
             clue.actual_solution_length = len(clue.actual_solution)
             clue.solution_start_letters = get_start_letters(clue.listed_solution)
 

@@ -38,11 +38,22 @@ fill_grid_tests = [
             0: "BOMBAYDUCK#MARC",
            14: "OWNS#BROWNSAUCE"
         },
-        columns = {
+        "columns": {
             0: "BALD#IMPRESARIO",
             14: "CHEAPSKATE#APSE"
         }
-
+    },
+    {
+        "title": "DT 30062",
+        "comments": "A simple example",
+        "rows": {
+            0: "NINCOMPOOP#STUD",
+           14: "DATA#HYDRANGEAS"
+        },
+        "columns": {
+            0: "NIBS#HARDBOILED",
+            14: "DISORDERLY#KRIS"
+        }
     },
 ]
 
@@ -85,10 +96,52 @@ class TestFillGrid:
         print("result_grid is:")
         result_grid.display()
 
-        assert result_grid.get_row_as_string(0) == "BOMBAYDUCK#MARC"
-        assert result_grid.get_col_as_string(0) == "BALD#IMPRESARIO"
+        for row, row_text in grid_test["rows"].items():
+            assert result_grid.get_row_as_string(row) == row_text
+
+        for col, col_text in grid_test["columns"].items():
+            assert result_grid.get_col_as_string(col) == col_text
+
+
+
+        # assert result_grid.get_row_as_string(0) == "BOMBAYDUCK#MARC"
+        # assert result_grid.get_col_as_string(0) == "BALD#IMPRESARIO"
   
 
 
-
+# TODO FIX/SHORTCUT THIS ISSUE BOTH ACROSS AND DOWN
+# 22:48:32.663 [  entry_page_fill_grid.py:0019] DEBUG    fill_grid                      fill_grid called clues left are 12
+# 22:48:32.664 [  entry_page_fill_grid.py:0024] DEBUG    fill_grid                      16d PRISONER, r6c9, try is 0
+# 22:48:32.665 [  entry_page_fill_grid.py:0024] DEBUG    fill_grid                      16d PRISONER, r6c10, try is 1
+# 22:48:32.666 [  entry_page_fill_grid.py:0024] DEBUG    fill_grid                      16d PRISONER, r6c11, try is 2
+# 22:48:32.668 [  entry_page_fill_grid.py:0024] DEBUG    fill_grid                      16d PRISONER, r6c12, try is 3
+# 22:48:32.670 [  entry_page_fill_grid.py:0024] DEBUG    fill_grid                      16d PRISONER, r6c13, try is 4
+# 22:48:32.671 [  entry_page_fill_grid.py:0024] DEBUG    fill_grid                      16d PRISONER, r6c14, try is 5
+# 22:48:32.673 [  entry_page_fill_grid.py:0024] DEBUG    fill_grid                      16d PRISONER, r7c0, try is 6
+# 22:48:32.674 [  entry_page_fill_grid.py:0024] DEBUG    fill_grid                      16d PRISONER, r7c1, try is 7
+# 22:48:32.676 [        crossword_grid.py:0106] DEBUG    can_write_down                 left_contiguous is 3, right_contiguous is 0
+# 22:48:32.676 [  entry_page_fill_grid.py:0024] DEBUG    fill_grid                      16d PRISONER, r7c2, try is 8
+# 22:48:32.678 [  entry_page_fill_grid.py:0024] DEBUG    fill_grid                      16d PRISONER, r7c3, try is 9
+# 22:48:32.679 [        crossword_grid.py:0106] DEBUG    can_write_down                 left_contiguous is 0, right_contiguous is 3
+# 22:48:32.680 [  entry_page_fill_grid.py:0024] DEBUG    fill_grid                      16d PRISONER, r7c4, try is 10
+# 22:48:32.681 [  entry_page_fill_grid.py:0024] DEBUG    fill_grid                      16d PRISONER, r7c5, try is 11
+# 22:48:32.683 [        crossword_grid.py:0106] DEBUG    can_write_down                 left_contiguous is 3, right_contiguous is 0
+# 22:48:32.683 [  entry_page_fill_grid.py:0024] DEBUG    fill_grid                      16d PRISONER, r7c6, try is 12
+# 22:48:32.685 [  entry_page_fill_grid.py:0024] DEBUG    fill_grid                      16d PRISONER, r7c7, try is 13
+# 22:48:32.686 [  entry_page_fill_grid.py:0028] DEBUG    fill_grid                      now grid is 
+# N|I|N|C|O|M|P|O|O|P|#|S|T|U|D
+# I|#|A|#|U|#|L|#|A|#|#|#|W|#|I
+# B|I|R|E|T|T|A|#|S|U|B|M|I|T|S
+# S|#|R|#|O|#|N|#|I|#|L|#|N|#|O
+# #|#|O|F|F|O|N|E|S|R|O|C|K|E|R
+# H|#|W|#|P|#|I|#|#|#|O|#|L|#|D
+# A|N|S|E|R|I|N|E|#|A|D|H|E|R|E
+# R|#|#|#|A|#|G|P|_|_|R|_|#|_|R
+# D|_|_|_|C|_|#|R|_|_|E|_|_|_|L
+# B|_|_|_|T|_|_|I|_|_|L|_|_|_|Y
+# O|_|_|_|I|_|_|S|_|_|A|_|_|_|#
+# I|_|_|_|C|_|_|O|_|_|T|_|_|_|_
+# L|_|_|_|E|_|_|N|_|_|I|_|_|_|_
+# E|_|_|_|#|_|_|E|_|_|O|_|_|_|_
+# D|_|_|_|_|_|_|R|_|_|N|_|_|_|_
 
