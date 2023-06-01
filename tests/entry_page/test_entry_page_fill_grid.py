@@ -41,7 +41,10 @@ fill_grid_tests = [
         "columns": {
             0: "BALD#IMPRESARIO",
             14: "CHEAPSKATE#APSE"
-        }
+        },
+        "partial_clues": None,
+        "max_tries": 247,
+        "max_recurse": 100,
     },
     {
         "title": "DT 30062",
@@ -53,7 +56,10 @@ fill_grid_tests = [
         "columns": {
             0: "NIBS#HARDBOILED",
             14: "DISORDERLY#KRIS"
-        }
+        },
+        "partial_clues": None,
+        "max_tries": 418,
+        "max_recurse": 100,
     },
 ]
 
@@ -90,11 +96,13 @@ class TestFillGrid:
         fill_grid = FillGrid(crossword_clues.by_number_sorted_clues()[:])
         fill_grid.list_clues()
 
-        result_grid = fill_grid.fill_grid().grid
+        fill_grid.fill_grid()
+
+        result_grid = fill_grid.grid
         assert isinstance(result_grid, CrosswordGrid)
 
-        print("result_grid is:")
-        result_grid.display()
+        logger.debug("result_grid is: \n%s", result_grid.text_grid())
+        logger.debug("Ran with recurse_count %s and try_count %s", fill_grid.recurse_count, fill_grid.try_count)
 
         for row, row_text in grid_test["rows"].items():
             assert result_grid.get_row_as_string(row) == row_text
@@ -102,7 +110,8 @@ class TestFillGrid:
         for col, col_text in grid_test["columns"].items():
             assert result_grid.get_col_as_string(col) == col_text
 
-
+        assert fill_grid.recurse_count <= grid_test["max_recurse"]
+        assert fill_grid.try_count <= grid_test["max_tries"]
 
         # assert result_grid.get_row_as_string(0) == "BOMBAYDUCK#MARC"
         # assert result_grid.get_col_as_string(0) == "BALD#IMPRESARIO"
