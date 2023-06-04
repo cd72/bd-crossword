@@ -25,6 +25,7 @@ headers = {
 
 start_referer = "https://www.google.com/"
 url_template = "http://bigdave44.com/{year}/{month}/{day}"
+DEFAULT_SLEEP_INTERVAL = 8
 
 
 class BDRequest:
@@ -39,7 +40,7 @@ class BDRequest:
         logger.debug(cls)
         return datetime.today()
 
-    def __init__(self, mean_interval=30):
+    def __init__(self, mean_interval=DEFAULT_SLEEP_INTERVAL):
         self.last_url = start_referer
         self.mean_interval = mean_interval
 

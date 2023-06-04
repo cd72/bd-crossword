@@ -6,7 +6,7 @@ from bd_crossword.common import crossword_index
 import logging
 
 logger = logging.getLogger(__name__)
-
+DEFAULT_SLEEP_INTERVAL = 8
 
 class IndexPageGetter:
     @classmethod
@@ -39,7 +39,7 @@ class IndexPageGetter:
                 return entry_for_date
 
         logger.debug(f"Downloading entry for date {index_date=}")
-        bd = bd_request.BDRequest(mean_interval=30)
+        bd = bd_request.BDRequest(mean_interval=DEFAULT_SLEEP_INTERVAL)
         html_text = bd.download_index_for_date(index_date)
         logger.debug("html length : %d", len(html_text))
         logger.debug("html : %s", html_text[:100])
