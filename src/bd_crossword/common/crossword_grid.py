@@ -51,6 +51,12 @@ class CrosswordGrid:
 
         if col + len(word) > self.cols:
             return False
+        
+        if self.left_is_alpha(row, col):
+            return False
+        
+        if self.right_is_alpha(row, col + len(word) - 1):
+            return False
 
         for i, letter in enumerate(word):
             if self.is_blocked(row, col + i):
@@ -83,6 +89,12 @@ class CrosswordGrid:
             return False
 
         if row + len(word) > self.rows:
+            return False
+        
+        if self.above_is_alpha(row, col):
+            return False
+        
+        if self.below_is_alpha(row + len(word) - 1, col):
             return False
 
         for i, letter in enumerate(word):

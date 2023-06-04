@@ -42,7 +42,6 @@ fill_grid_tests = [
             0: "BALD#IMPRESARIO",
             14: "CHEAPSKATE#APSE"
         },
-        "partial_clues": None,
         "max_tries": 247,
         "max_recurse": 100,
     },
@@ -57,7 +56,20 @@ fill_grid_tests = [
             0: "NIBS#HARDBOILED",
             14: "DISORDERLY#KRIS"
         },
-        "partial_clues": None,
+        "max_tries": 418,
+        "max_recurse": 100,
+    },
+    {
+        "title": "DT 30292",
+        "comments": "A simple example",
+        "rows": {
+            0: "UNEXCITED#TOPIC",
+           14: "ENEMY#STEAMSHIP"
+        },
+        "columns": {
+            0: "UNDO#FOREXAMPLE",
+            14: "CATEGORISE#STEP"
+        },
         "max_tries": 418,
         "max_recurse": 100,
     },
@@ -116,7 +128,61 @@ class TestFillGrid:
         # assert result_grid.get_row_as_string(0) == "BOMBAYDUCK#MARC"
         # assert result_grid.get_col_as_string(0) == "BALD#IMPRESARIO"
   
+partial_grid_tests = [
+    {
+        "title": "DT 30062",
+        "comments": "A simple example",
+        "rows": {},
+        "columns": {
+            8: "OASIS##PRISONER",
+        },
+        "stop_after": "PRISONER",
+        "max_tries": 418,
+        "max_recurse": 100,
+    },
+]
 
+@pytest.mark.parametrize("grid_test", partial_grid_tests, ids=metadata_idfn, scope="class")
+class TestPartialFillGrid:
+    # Arrange
+    @pytest.fixture(scope="class")
+    def an_index_entry(self, grid_test, crossword_index_database):
+        title = grid_test["title"]
+        return crossword_index_database.retrieve_index_entry_for_title(title)
+
+    @pytest.fixture(scope="class")
+    def entry_page_html(self, an_index_entry: index_entry.IndexEntry):
+        return entry_page_getter.get_entry_page(
+            an_index_entry.title, an_index_entry.url
+        )
+    
+    @pytest.fixture(scope="class")
+    def crossword_clues(self, entry_page_html):
+        return entry_page_parser.parse_entry_page(entry_page_html)
+    
+    def test_fill_grid_partial(self, crossword_clues, grid_test):
+        fill_grid = FillGrid(crossword_clues.by_number_sorted_clues()[:], stop_after=grid_test["stop_after"])
+        fill_grid.list_clues()
+
+        fill_grid.fill_grid()
+
+        result_grid = fill_grid.grid
+        assert isinstance(result_grid, CrosswordGrid)
+
+        logger.debug("result_grid is: \n%s", result_grid.text_grid())
+        logger.debug("Ran with recurse_count %s and try_count %s", fill_grid.recurse_count, fill_grid.try_count)
+
+        for row, row_text in grid_test["rows"].items():
+            assert result_grid.get_row_as_string(row) == row_text
+
+        for col, col_text in grid_test["columns"].items():
+            assert result_grid.get_col_as_string(col) == col_text
+
+        assert fill_grid.recurse_count <= grid_test["max_recurse"]
+        assert fill_grid.try_count <= grid_test["max_tries"]
+
+        # assert result_grid.get_row_as_string(0) == "BOMBAYDUCK#MARC"
+        # assert result_grid.get_col_as_string(0) == "BALD#IMPRESARIO"
 
 # TODO FIX/SHORTCUT THIS ISSUE BOTH ACROSS AND DOWN
 # 22:48:32.663 [  entry_page_fill_grid.py:0019] DEBUG    fill_grid                      fill_grid called clues left are 12

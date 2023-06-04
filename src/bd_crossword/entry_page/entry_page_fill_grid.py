@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 
 class FillGrid:
-    def __init__(self, clues, grid=None, row=0, col=0, try_count=0, recurse_count=0):
+    def __init__(self, clues, grid=None, row=0, col=0, try_count=0, recurse_count=0, stop_after=None):
         if grid is None:
             grid = CrosswordGrid(15, 15)
         
@@ -16,6 +16,7 @@ class FillGrid:
         self.col = col
         self.try_count = try_count
         self.recurse_count = recurse_count
+        self.stop_after = stop_after
 
     def fill_grid(self):
         self.recurse_count += 1
@@ -30,7 +31,7 @@ class FillGrid:
                 grid_savepoint = self.deep_copy()
                 if self.grid.write_direction(self.row, self.col, word, direction, clue_id):
                     logger.debug("now grid is %s", self.grid.text_grid())
-                    if self.fill_grid():
+                    if self.fill_grid() or word == self.stop_after:
                         logger.debug("returned fill_grid back to us with content %s", self.grid.text_grid())
                         return self
                     else:
@@ -64,7 +65,7 @@ class FillGrid:
 
     def deep_copy(self):
         new_grid = self.grid.deep_copy()
-        return FillGrid(list(self.clues), new_grid, self.row, self.col, self.try_count, self.recurse_count)
+        return FillGrid(list(self.clues), new_grid, self.row, self.col, self.try_count, self.recurse_count, self.stop_after)
 
     def list_clues(self):
         for clue in self.clues:
