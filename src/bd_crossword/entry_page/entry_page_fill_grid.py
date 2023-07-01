@@ -9,7 +9,6 @@ class FillGrid:
     def __init__(self, clues, grid=None, row=0, col=0, try_count=0, recurse_count=0, stop_after=None):
         if grid is None:
             grid = CrosswordGrid(15, 15)
-        
         self.grid = grid
         self.clues = clues
         self.row = row
@@ -17,27 +16,39 @@ class FillGrid:
         self.try_count = try_count
         self.recurse_count = recurse_count
         self.stop_after = stop_after
+        self.failure = False
+        logger.debug("The type of self.clues is %s",type(self.clues).__name__)
 
+
+    def has_failed(self):
+        return self.failure
+    
+    def succeded(self):
+        return not self.failure
 
     def fill_clue(self):
-        item = self.clues.pop(0)
+        item = self.clues.get_first_clue()
         word, clue_id, direction = item.actual_solution, item.clue_id, item.direction
         for try_num in range(35):
             self.try_count += 1
             logger.debug("%s%s %s, r%sc%s, try is %s", clue_id, direction, word, self.row, self.col, try_num)
 
-            grid_savepoint = self.deep_copy()
-            if self.grid.write_direction(self.row, self.col, word, direction, clue_id):
-                logger.debug("before recurse call grid is %s", self.grid.text_grid())
-                if word == self.stop_after:
-                    return self
+            new_fill_grid = self.deep_copy()
+            if new_fill_grid.grid.write_direction(new_fill_grid.row, new_fill_grid.col, word, direction, clue_id):
+                logger.debug("before recurse call grid is %s", new_fill_grid.grid.text_grid())
+                if word == new_fill_grid.stop_after:
+                    self.restore_from(new_fill_grid)
+                    return
 
-                if self.fill_grid() is not False:
-                    logger.debug("returned fill_grid back to us with content %s", self.grid.text_grid())
-                    return self
+                new_fill_grid.fill_grid()
+                if new_fill_grid.succeded():
+                    logger.debug("fill_grid succeeded and returned %s", new_fill_grid.grid.text_grid())
+                    self.restore_from(new_fill_grid)
+                    logger.debug("restored grid is %s", self.grid.text_grid())
 
-                logger.debug("<<<<<<<< fill_grid returned False, so we restore the grid to %s", grid_savepoint.grid.text_grid())
-                self.restore_from_deep_copy(grid_savepoint)
+                    return
+
+                logger.debug("<<<<<<<< fill_grid returned as failed, so we restore the grid to %s", self.grid.text_grid())
 
             self.move_to_next_square()
 
@@ -45,16 +56,19 @@ class FillGrid:
             "no more tries left, row is %s, col is %s, word is %s, direction is %s, grid is %s",
             self.row, self.col, word, direction, self.grid.text_grid()
         )
-        return False
+        self.failure = True
+        return self
 
     def fill_grid(self):
         self.recurse_count += 1
+        logger.debug("The type of self.clues is %s",type(self.clues).__name__)
         logger.debug("fill_grid called at depth %s, clues left are %s", self.recurse_count, len(self.clues))
         if len(self.clues) > 0:
-            if self.fill_clue() is False:
-                logger.debug("fill_clue returned False, so we return False")
-                return False
+            self.fill_clue()
 
+        logger.debug(type(self))
+        logger.debug(type(self.grid))
+        logger.debug("fill_grid returning grid %s", self.grid.text_grid())
         return self        
                 # return self.fill_grid_starting_with(row, col + 1, current_clue_index + 1)
         # return self.grid
@@ -71,15 +85,16 @@ class FillGrid:
 
     def deep_copy(self):
         new_grid = self.grid.deep_copy()
-        return FillGrid(list(self.clues), new_grid, self.row, self.col, self.try_count, self.recurse_count, self.stop_after)
+        new_clues = self.clues.clone()
+        return FillGrid(new_clues, new_grid, self.row, self.col, self.try_count, self.recurse_count, self.stop_after)
     
-    def restore_from_deep_copy(self, deep_copy):
+    def restore_from(self, deep_copy):
         self.grid = deep_copy.grid.deep_copy()
-        self.clues = list(deep_copy.clues)
+        self.clues = deep_copy.clues.clone()
         self.row = deep_copy.row
         self.col = deep_copy.col
-        self.try_count = deep_copy.try_count
-
+        self.failure = deep_copy.failure
+        # self.try_count = deep_copy.try_count
 
     def list_clues(self):
         for clue in self.clues:

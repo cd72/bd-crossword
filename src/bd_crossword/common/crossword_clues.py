@@ -32,19 +32,6 @@ class CrosswordClue:
         self.by_number_sort_index = f"{int(self.clue_id):02d}{self.direction}"
 
 
-# @dataclass
-# class Crossword:
-#     title: str = None
-#     hints_author: str = None
-#     difficulty: float = None
-#     enjoyment: float = None
-#     url: Optional[str] = None
-#     puzzle_date: Optional[datetime.date] = None
-#     across_clues: Optional[dict[int, CrosswordClue]] = None
-#     down_clues: Optional[dict[int, CrosswordClue]] = None
-#     clues: Optional[list[CrosswordClue]] = None
-
-
 @dataclass
 class CrosswordClues:
     across: dict[int, CrosswordClue]
@@ -57,4 +44,51 @@ class CrosswordClues:
         return all_clues
         
 
+##############################################################################
+# class ror Crossword Clues sorted by the clud_id then direction
+# this should have the ability to
+# 1. remove and return the first clue.  pop it
+# 2. return and remove the last value with a specify actual_solution_length
+# 3. include a clone method
+
+class CrosswordCluesSortedByID:
+    @classmethod
+    def new_from_crossword_clues(cls, crossword_clues: CrosswordClues):
+        logger.debug("new_from_crossword_clues is called with crossword_clues of type %s",type(crossword_clues).__name__)
+        clue_list = list(crossword_clues.across.values()) + list(crossword_clues.down.values())
+
+        logger.debug("clue_list is of type %s",type(clue_list).__name__)
+        clue_list.sort(key=lambda clue: clue.by_number_sort_index)
+        
+        logger.debug("clue_list is of type %s",type(clue_list).__name__)
+    
+        logger.debug("About to call the constructor with a parameter of type %s",type(clue_list).__name__)
+
+        sorted_clue_list = cls(clue_list)
+        logger.debug("The type of sorted_clue_list is %s",type(sorted_clue_list).__name__)
+        return sorted_clue_list
+
+
+    def __init__(self, sorted_clue_list):
+        self.clues_sorted = sorted_clue_list
+        logger.debug("The type of self.clues_sorted is %s",type(self.clues_sorted).__name__)
+
+
+    def __len__(self):
+        logger.debug("The type of self.clues_sorted is %s",type(self.clues_sorted).__name__)
+
+        return len(self.clues_sorted)
+    
+    def get_first_clue(self):
+        return self.clues_sorted.pop(0)
+    
+    def get_last_clue(self, direction:str, actual_solution_length: int):
+        for clue in reversed(self.clues_sorted):
+            if clue.actual_solution_length == actual_solution_length and clue.direction == direction:
+                return self.clues_sorted.pop(self.clues_sorted.index(clue))
+        raise ValueError(f"No clue with direction {direction} and actual_solution_length {actual_solution_length}")
+    
+    def clone(self):
+        return CrosswordCluesSortedByID(self.clues_sorted.copy())
+        
 

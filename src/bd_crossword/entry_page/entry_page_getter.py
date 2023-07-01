@@ -57,6 +57,7 @@ def simplify_html(html: str):
     html = html.replace('<span class="Xspoiler">', '<span class="spoiler">') # DT 29142
     html = html.replace('<span class="mrkSpoiler"', '<span class="spoiler"') # DT 28709
     html = html.replace('> Daily Telegraph Cryptic No', '>Daily Telegraph Cryptic No') # DT 28368
+    html = html.replace('Daily<strong> Telegraph', '<strong>Daily Telegraph') # DT 30327
 
     html = html.replace(">Daily Telegraph Cryptic 2", ">Daily Telegraph Cryptic No 2") # for DT 30091
     html = html.replace(">Daily Telegraph Cryptic 3", ">Daily Telegraph Cryptic No 3") # for DT 30091
