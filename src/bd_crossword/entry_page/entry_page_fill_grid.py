@@ -30,27 +30,28 @@ class FillGrid:
 
     def fill_clue(self):
         head_clue = self.clues.pop_head_clue()
-        word, wordlen, clue_id, direction = head_clue.actual_solution, head_clue.actual_solution_length, head_clue.clue_id, head_clue.direction
 
         if len(self.clues) > 0:
-            tail_clue = self.clues.pop_tail_clue(direction, wordlen)
+            tail_clue = self.clues.pop_tail_clue(head_clue.direction, head_clue.actual_solution_length)
         else:
             tail_clue = None
 
 
         for try_num in range(35):
             self.try_count += 1
-            logger.debug("head is r%sc%s", self.head_row, self.head_col)
-            logger.debug("tail is r%sc%s", self.tail_row, self.tail_col)
-            logger.debug("head_clue is %s%s %s(%d), r%sc%s, try is %s", clue_id, direction, word, wordlen, self.head_row, self.head_col, try_num)
+            logger.debug("head is r%sc%s, tail is r%sc%s, try is %s", self.head_row, self.head_col, self.tail_row, self.tail_col, try_num)
+            logger.debug("head_clue is %s%s %s(%d)", head_clue.clue_id, head_clue.direction, head_clue.actual_solution, head_clue.actual_solution_length)
             if tail_clue:
                 logger.debug("tail_clue is %s%s %s(%d)", tail_clue.clue_id, tail_clue.direction, tail_clue.actual_solution, tail_clue.actual_solution_length)
 
             new_fill_grid = self.deep_copy()
-            if new_fill_grid.grid.write_direction(new_fill_grid.head_row, new_fill_grid.head_col, word, direction, clue_id):
-                logger.debug("wrote %s at r%sc%s", word, new_fill_grid.head_row, new_fill_grid.head_col)
+            if new_fill_grid.grid.write_direction(new_fill_grid.head_row, new_fill_grid.head_col, head_clue.actual_solution, head_clue.direction, head_clue.clue_id):
+                logger.debug("wrote %s at r%sc%s", head_clue.actual_solution, new_fill_grid.head_row, new_fill_grid.head_col)
                 if tail_clue is None or new_fill_grid.grid.write_tail_direction(new_fill_grid.tail_row, new_fill_grid.tail_col, tail_clue.actual_solution, tail_clue.direction, tail_clue.clue_id):
-                    if word == new_fill_grid.stop_after:
+                    if tail_clue is not None:
+                        logger.debug("wrote %s backwards from r%sc%s", tail_clue.actual_solution, new_fill_grid.tail_row, new_fill_grid.tail_col)
+
+                    if head_clue.actual_solution == new_fill_grid.stop_after:
                         self.restore_from(new_fill_grid)
                         return
 
@@ -68,8 +69,8 @@ class FillGrid:
             self.move_to_next_square()
 
         logger.debug(
-            "no more tries left, head_row is %s, head_col is %s, word is %s, direction is %s, grid is %s",
-            self.head_row, self.head_col, word, direction, self.grid.text_grid()
+            "no more tries left, head_row is %s, head_col is %s, head_clue.actual_solution is %s, head_clue.direction is %s, grid is %s",
+            self.head_row, self.head_col, head_clue.actual_solution, head_clue.direction, self.grid.text_grid()
         )
         self.failure = True
         return self
