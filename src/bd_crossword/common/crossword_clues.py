@@ -73,10 +73,10 @@ class CrosswordCluesSortedByID:
     def __iter__(self):
         return iter(self.clues_sorted)
     
-    def get_first_clue(self):
+    def pop_head_clue(self):
         return self.clues_sorted.pop(0)
     
-    def get_last_clue(self, direction:str, actual_solution_length: int):
+    def pop_tail_clue(self, direction:str, actual_solution_length: int):
         for clue in reversed(self.clues_sorted):
             if clue.actual_solution_length == actual_solution_length and clue.direction == direction:
                 return self.clues_sorted.pop(self.clues_sorted.index(clue))
