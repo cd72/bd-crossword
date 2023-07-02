@@ -44,13 +44,6 @@ class CrosswordClues:
         return all_clues
         
 
-##############################################################################
-# class ror Crossword Clues sorted by the clud_id then direction
-# this should have the ability to
-# 1. remove and return the first clue.  pop it
-# 2. return and remove the last value with a specify actual_solution_length
-# 3. include a clone method
-
 class CrosswordCluesSortedByID:
     @classmethod
     def new_from_crossword_clues(cls, crossword_clues: CrosswordClues):
@@ -69,7 +62,7 @@ class CrosswordCluesSortedByID:
         return sorted_clue_list
 
 
-    def __init__(self, sorted_clue_list):
+    def __init__(self, sorted_clue_list: list[CrosswordClue]):
         self.clues_sorted = sorted_clue_list
         logger.debug("The type of self.clues_sorted is %s",type(self.clues_sorted).__name__)
 
@@ -78,6 +71,9 @@ class CrosswordCluesSortedByID:
         logger.debug("The type of self.clues_sorted is %s",type(self.clues_sorted).__name__)
 
         return len(self.clues_sorted)
+    
+    def __iter__(self):
+        return iter(self.clues_sorted)
     
     def get_first_clue(self):
         return self.clues_sorted.pop(0)
