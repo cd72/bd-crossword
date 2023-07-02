@@ -144,6 +144,18 @@ partial_grid_tests = [
         "max_tries": 418,
         "max_recurse": 100,
     },
+    {
+        "title": "DT 30308",
+        "comments": "unit test for fills from both ends",
+        "rows": {
+           0:  "PAIRS#_________",
+           14:  "_________#FIEND",
+        },
+        "columns": {},
+        "stop_after": "PAIRS",
+        "max_tries": 418,
+        "max_recurse": 100,
+    },
     # {
     #     "title": "DT 30308",
     #     "comments": "unit test for fills from both ends",

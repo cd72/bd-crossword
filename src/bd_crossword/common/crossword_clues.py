@@ -63,13 +63,11 @@ class CrosswordCluesSortedByID:
 
 
     def __init__(self, sorted_clue_list: list[CrosswordClue]):
+        logger.debug("Making new %s with param of type %s",type(self).__name__,type(sorted_clue_list).__name__)
         self.clues_sorted = sorted_clue_list
-        logger.debug("The type of self.clues_sorted is %s",type(self.clues_sorted).__name__)
 
 
     def __len__(self):
-        logger.debug("The type of self.clues_sorted is %s",type(self.clues_sorted).__name__)
-
         return len(self.clues_sorted)
     
     def __iter__(self):

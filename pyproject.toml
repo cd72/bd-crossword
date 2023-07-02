@@ -47,11 +47,11 @@ build-backend = "poetry.core.masonry.api"
 log_cli = false
 log_cli_level = "INFO"
 log_cli_format = "%(asctime)s.%(msecs)03d [%(filename)30s:%(lineno)04d] %(levelname)-8s %(funcName)-30s %(message)s"
-log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+log_cli_date_format = "%M:%S"
 
 log_level = "DEBUG"
-log_format = "%(asctime)s.%(msecs)03d %(module)s [%(filename)30s:%(lineno)04d] %(levelname)-8s %(funcName)-30s %(message)s"
-log_date_format = "%Y-%m-%d %H:%M:%S"
+log_format = "%(asctime)s.%(msecs)03d %(module)20s [%(filename)30s:%(lineno)04d] %(levelname)-8s %(funcName)-30s %(message)s"
+log_date_format = "%M:%S"
 
 log_file = "pytest.log"
 log_file_level = "DEBUG"

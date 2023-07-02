@@ -7,6 +7,8 @@ logger = logging.getLogger(__name__)
 
 class FillGrid:
     def __init__(self, clues, grid=None, row=0, col=0, try_count=0, recurse_count=0, stop_after=None):
+        logger.debug("Making new %s with clues param of type %s",type(self).__name__,type(clues).__name__)
+
         if grid is None:
             grid = CrosswordGrid(15, 15)
         self.grid = grid
@@ -17,8 +19,6 @@ class FillGrid:
         self.recurse_count = recurse_count
         self.stop_after = stop_after
         self.failure = False
-        logger.debug("The type of self.clues is %s",type(self.clues).__name__)
-
 
     def has_failed(self):
         return self.failure
@@ -61,13 +61,12 @@ class FillGrid:
 
     def fill_grid(self):
         self.recurse_count += 1
-        logger.debug("The type of self.clues is %s",type(self.clues).__name__)
         logger.debug("fill_grid called at depth %s, clues left are %s", self.recurse_count, len(self.clues))
         if len(self.clues) > 0:
             self.fill_clue()
 
-        logger.debug(type(self))
-        logger.debug(type(self.grid))
+        logger.debug("type of self is %s", type(self-__name__))
+        logger.debug("type of self.grid is %s", type(self.grid).__name__)
         logger.debug("fill_grid returning grid %s", self.grid.text_grid())
         return self        
                 # return self.fill_grid_starting_with(row, col + 1, current_clue_index + 1)
@@ -98,7 +97,7 @@ class FillGrid:
 
     def list_clues(self):
         for clue in self.clues:
-            logger.debug("clue is %s, %s, %s", clue.clue_id, clue.direction, clue.actual_solution)
+            logger.debug("%2d%s %s", clue.clue_id, clue.direction, clue.actual_solution)
 
 
 
