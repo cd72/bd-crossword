@@ -31,7 +31,11 @@ class FillGrid:
     def fill_clue(self):
         head_clue = self.clues.pop_head_clue()
         word, wordlen, clue_id, direction = head_clue.actual_solution, head_clue.actual_solution_length, head_clue.clue_id, head_clue.direction
-        # tail_clue = self.clues.pop_tail_clue(direction, wordlen)
+
+        if len(self.clues) > 0:
+            tail_clue = self.clues.pop_tail_clue(direction, wordlen)
+        else:
+            tail_clue = None
 
 
         for try_num in range(35):
@@ -39,24 +43,27 @@ class FillGrid:
             logger.debug("head is r%sc%s", self.head_row, self.head_col)
             logger.debug("tail is r%sc%s", self.tail_row, self.tail_col)
             logger.debug("head_clue is %s%s %s(%d), r%sc%s, try is %s", clue_id, direction, word, wordlen, self.head_row, self.head_col, try_num)
-            # logger.debug("tail_clue is %s%s %s(%d)", tail_clue.clue_id, tail_clue.direction, tail_clue.actual_solution, tail_clue.actual_solution_length)
+            if tail_clue:
+                logger.debug("tail_clue is %s%s %s(%d)", tail_clue.clue_id, tail_clue.direction, tail_clue.actual_solution, tail_clue.actual_solution_length)
 
             new_fill_grid = self.deep_copy()
             if new_fill_grid.grid.write_direction(new_fill_grid.head_row, new_fill_grid.head_col, word, direction, clue_id):
-                if word == new_fill_grid.stop_after:
-                    self.restore_from(new_fill_grid)
-                    return
+                logger.debug("wrote %s at r%sc%s", word, new_fill_grid.head_row, new_fill_grid.head_col)
+                if tail_clue is None or new_fill_grid.grid.write_tail_direction(new_fill_grid.tail_row, new_fill_grid.tail_col, tail_clue.actual_solution, tail_clue.direction, tail_clue.clue_id):
+                    if word == new_fill_grid.stop_after:
+                        self.restore_from(new_fill_grid)
+                        return
 
-                logger.debug("before recurse call grid is %s", new_fill_grid.grid.text_grid())
-                new_fill_grid.fill_grid()
-                if new_fill_grid.succeded():
-                    logger.debug("fill_grid succeeded and returned %s", new_fill_grid.grid.text_grid())
-                    self.restore_from(new_fill_grid)
-                    logger.debug("restored grid is %s", self.grid.text_grid())
+                    logger.debug("before recurse call grid is %s", new_fill_grid.grid.text_grid())
+                    new_fill_grid.fill_grid()
+                    if new_fill_grid.succeded():
+                        logger.debug("fill_grid succeeded and returned %s", new_fill_grid.grid.text_grid())
+                        self.restore_from(new_fill_grid)
+                        logger.debug("restored grid is %s", self.grid.text_grid())
 
-                    return
+                        return
 
-                logger.debug("<<<<<<<< fill_grid returned as failed, so we restore the grid to %s", self.grid.text_grid())
+                    logger.debug("<<<<<<<< fill_grid returned as failed, so we restore the grid to %s", self.grid.text_grid())
 
             self.move_to_next_square()
 
@@ -83,6 +90,9 @@ class FillGrid:
     def move_to_next_square(self):
         if self.grid.is_empty(self.head_row, self.head_col):
             self.grid.set_blocked(self.head_row, self.head_col)
+
+        if self.grid.is_empty(self.tail_row, self.tail_col):
+            self.grid.set_blocked(self.tail_row, self.tail_col)
     
         if self.head_col < self.grid.cols - 1:
             self.head_col += 1

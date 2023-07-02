@@ -145,7 +145,6 @@ class CrosswordGrid:
             self.grid[row][col] = CrosswordGrid.FILL
 
     def write_across(self, row, col, word, clue_id):
-
         self.clue_ids[row][col] = clue_id
         if self.can_write_across(row, col, word, clue_id) == False:
             return False
@@ -156,6 +155,9 @@ class CrosswordGrid:
         if col + len(word) < self.cols:
             self.set_blocked(row, col + len(word))
 
+        if col > 0:
+            self.set_blocked(row, col - 1)
+
         return True
 
     def write_down(self, row, col, word, clue_id):
@@ -165,6 +167,9 @@ class CrosswordGrid:
         
         for i, letter in enumerate(word):
             self.set_letter(row + i, col, letter)
+
+        if row > 0:
+            self.set_blocked(row - 1, col)
 
         if row + len(word) < self.rows:
             self.set_blocked(row + len(word), col)
@@ -179,6 +184,20 @@ class CrosswordGrid:
         else:
             raise ValueError(f"Unknown direction {direction}")
     
+    def write_tail_direction(self, row, col, word, direction, clue_id):
+        if direction == 'a':
+            col = (col - len(word)) + 1
+            if col < 0:
+                raise ValueError(f"Cannot write across {word} from row {row} col {col}")
+            return self.write_across(row, col, word, clue_id)
+        elif direction == 'd':
+            row = (row - len(word)) + 1
+            if row < 0:
+                raise ValueError(f"Cannot write down {word} from row {row} col {col}")
+            return self.write_down(row, col, word, clue_id)
+        else:
+            raise ValueError(f"Unknown direction {direction}")
+
     def set_fill_squares(self):
         # convert all the empty squares to fill squares in the entire grid
         for row in range(self.rows):

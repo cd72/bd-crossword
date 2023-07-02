@@ -148,26 +148,19 @@ partial_grid_tests = [
         "title": "DT 30308",
         "comments": "unit test for fills from both ends",
         "rows": {
-           0:  "PAIRS#_________",
-           14:  "_________#FIEND",
+           0:  "PAIRS##IMPERIAL",
+           1: "U#L#T#I#E#D#G#U",
+           13: "O#N#N#K#S#F#L#E",
+           14:  "ENTITLED##FIEND",
         },
-        "columns": {},
-        "stop_after": "PAIRS",
+        "columns": {
+           0:  "PUBCRAWL##CANOE",
+           14: "LUSTY##CENSORED",
+        },
+        "stop_after": "BALDRIC",
         "max_tries": 418,
         "max_recurse": 100,
     },
-    # {
-    #     "title": "DT 30308",
-    #     "comments": "unit test for fills from both ends",
-    #     "rows": {},
-    #     "columns": {
-    #        0:  "PUBCRAWL#______",
-    #        14: "______#CENSORED",
-    #     },
-    #     "stop_after": "ILLEGAL",
-    #     "max_tries": 418,
-    #     "max_recurse": 100,
-    # },
 ]
 
 @pytest.mark.parametrize("grid_test", partial_grid_tests, ids=metadata_idfn, scope="class")
