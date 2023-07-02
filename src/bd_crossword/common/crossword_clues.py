@@ -77,6 +77,9 @@ class CrosswordCluesSortedByID:
         return self.clues_sorted.pop(0)
     
     def pop_tail_clue(self, direction:str, actual_solution_length: int):
+        if len(self.clues_sorted) == 0:
+            return None
+           
         for clue in reversed(self.clues_sorted):
             if clue.actual_solution_length == actual_solution_length and clue.direction == direction:
                 return self.clues_sorted.pop(self.clues_sorted.index(clue))
