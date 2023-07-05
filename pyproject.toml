@@ -18,6 +18,7 @@ rich = "^13.3.1"
 [tool.poetry.scripts]
 index-page-get = "bd_crossword.index_page.console:main"
 entry-page-get = "bd_crossword.entry_page.console:main"
+html-page-generate = "bd_crossword.html_page.console:main"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.1.3"
