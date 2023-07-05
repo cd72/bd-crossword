@@ -23,7 +23,7 @@ class TestClues03:
         logger.debug("Act")
         logger.debug("id is %s", id(self))
 
-        return entry_page_parser.count_clues_03(html)
+        return entry_page_parser.parse_entry_page(html)
 
     def test_across_clues_header_found(self, act):
         logger.debug("Testing across clues")

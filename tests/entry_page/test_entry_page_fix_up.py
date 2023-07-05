@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from collections import Counter
 import pytest
 import pathlib
+from typing import Set
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +64,7 @@ def test_no_tags(html, id):
     )
     logger.debug(tag_counter)
 
-    tags_found = {tag[0] for tag in tag_counter.keys()}
+    tags_found = {tag[0] for tag in tag_counter}
 
     if id == "DT28445":  # This has answers visible
         assert tags_found == {"spoiler"}
@@ -71,7 +72,7 @@ def test_no_tags(html, id):
         assert tags_found == {"u", "spoiler"}
 
 
-all_disallowed_characters = set()
+all_disallowed_characters: Set[str] = set()
 import string
 
 
