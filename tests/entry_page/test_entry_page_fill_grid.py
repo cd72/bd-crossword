@@ -57,6 +57,22 @@ fill_grid_tests = [
         "max_tries": 418,
         "max_recurse": 100,
     },
+    {
+        "title": "DT 29578",
+        "comments": "From the tricky list",
+        "rows": {0: "#SUPERMARKET###", 14: "###PENETRATING#"},
+        "columns": {0: "#SOPHISTICATED#", 14: "#ADVERTISEMENT#"},
+        "max_tries": 418,
+        "max_recurse": 100,
+    },
+    {
+        "title": "DT 29907",
+        "comments": "From the tricky list",
+        "rows": {0: "###I#L#C#L#A###", 14: "###T#Y#L#N#T###"},
+        "columns": {1: "#TRADEDISCOUNT#", 13: "#DISCRIMINATOR#"},
+        "max_tries": 418,
+        "max_recurse": 100,
+    },
 ]
 
 

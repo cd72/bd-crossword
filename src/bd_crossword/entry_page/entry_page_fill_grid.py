@@ -30,7 +30,11 @@ class FillGrid:
     def succeded(self):
         return self.state == "Success"
 
-    def try_filling(self, head_clue, tail_clue):
+
+    def try_filling_head(self, head_clue):
+        pass
+
+    def try_filling_at_pos(self, head_clue, tail_clue):
         logger.debug("head is r%sc%s, tail is r%sc%s", self.head_row, self.head_col, self.tail_row, self.tail_col)
         logger.debug("head_clue is %s%s %s(%d)", head_clue.clue_id, head_clue.direction, head_clue.actual_solution, head_clue.actual_solution_length)
         if tail_clue:
@@ -51,14 +55,13 @@ class FillGrid:
 
                 logger.debug("before recurse call grid is %s", new_fill_grid.grid.text_grid())
                 new_fill_grid.fill_grid()
-                if new_fill_grid.succeded():
-                    logger.debug("fill_grid succeeded and returned %s", new_fill_grid.grid.text_grid())
-                    self.restore_from(new_fill_grid)
-                    logger.debug("restored grid is %s", self.grid.text_grid())
 
+                if new_fill_grid.succeded():
+                    logger.debug("fill_grid() succeeded.  Copying grid back to self.")
+                    self.restore_from(new_fill_grid)
                     return
 
-                logger.debug("<<<<<<<< fill_grid returned as failed, so we restore the grid to %s", self.grid.text_grid())
+                logger.debug("<<<<<<<< fill_grid() returned as failed, so we keep the grid as %s", self.grid.text_grid())
             else:
                 logger.debug("failed to write %s at r%sc%s", tail_clue.actual_solution, new_fill_grid.tail_row, new_fill_grid.tail_col)
         else:
@@ -73,11 +76,21 @@ class FillGrid:
         for try_num in range(35):
             self.try_count += 1
             logger.debug("try_num is %s, try_count is %s", try_num, self.try_count)
-            self.try_filling(head_clue, tail_clue)
+            self.try_filling_at_pos(head_clue, tail_clue)
 
             if self.succeded() or self.has_failed():
                 return
+
             self.move_to_next_square()
+            r, c = self.head_row, self.head_col
+            if r>=1 and c>=2 and self.grid.is_blocked(r, c-1) and self.grid.is_blocked(r-1, c-1) and self.grid.is_blocked(r-1, c-2) and self.grid.is_blocked(r, c-2):
+                logger.debug("<<<<<<<<< blocked block detected")
+                break
+
+            if c>=4 and self.grid.is_blocked(r, c-1) and self.grid.is_blocked(r, c-2) and self.grid.is_blocked(r, c-3) and self.grid.is_blocked(r, c-4):
+                logger.debug("<<<<<<<<< blocked line detected")
+                break
+
         
         logger.debug(
             "no more tries left, head_row is %s, head_col is %s, head_clue.actual_solution is %s, head_clue.direction is %s, grid is %s",
@@ -92,11 +105,11 @@ class FillGrid:
         if len(self.clues) > 0:
             self.fill_clue()
         else:
+            self.grid.set_fill_squares()
+            logger.debug("All clues have been used, setting success flag")
             self.state = "Success"
 
-        logger.debug("type of self is %s", type(self).__name__)
-        logger.debug("type of self.grid is %s", type(self.grid).__name__)
-        logger.debug("fill_grid returning grid %s", self.grid.text_grid())
+        logger.debug("fill_grid() method completed and returning grid %s", self.grid.text_grid())
         return self        
 
 
