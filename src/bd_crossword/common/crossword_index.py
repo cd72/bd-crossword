@@ -2,12 +2,13 @@ import textwrap
 import sqlite3
 from . import index_entry
 import logging
+from typing import Generator
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class CrosswordIndex:
-    def __init__(self, filename=":memory:"):
+    def __init__(self, filename:str=":memory:"):
         self.conn = sqlite3.connect(
             filename, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES
         )
@@ -26,7 +27,7 @@ class CrosswordIndex:
         self.conn.execute(create_table)
         self.conn.row_factory = sqlite3.Row
 
-    def new_index_entry(self, index_entry):
+    def new_index_entry(self, index_entry: index_entry.IndexEntry):
         insert_stmt = textwrap.dedent(
             """INSERT OR REPLACE INTO index_entry
             (page_date, title, url, hints_author, difficulty, enjoyment, last_updated)
@@ -49,9 +50,7 @@ class CrosswordIndex:
         self.conn.commit()
         self.print_count()
 
-    def retrieve_index_entry_for_date(self, page_date):
-        logger.debug(f"{page_date=}")
-
+    def retrieve_index_entry_for_date(self, page_date) -> index_entry.IndexEntry | None:
         select_stmt = textwrap.dedent(
             """
             select page_date, title, url,
@@ -76,8 +75,7 @@ class CrosswordIndex:
         logger.debug("no rows found")
         return None
 
-
-    def retrieve_index_entry_for_title(self, title):
+    def retrieve_index_entry_for_title(self, title) -> index_entry.IndexEntry | None:
         logger.debug(f"{title=}")
 
         select_stmt = textwrap.dedent(
@@ -103,8 +101,7 @@ class CrosswordIndex:
         logger.debug("no rows found")
         return None
 
-
-    def retrieve_all_urls(self):
+    def retrieve_all_urls(self) -> Generator[tuple[str, str], None, None]:
         select_stmt = textwrap.dedent(
             """
             select title, url
@@ -120,7 +117,7 @@ class CrosswordIndex:
         for row in cur:
             yield row["title"], row["url"]
 
-    def retrieve_all(self):
+    def retrieve_all(self) -> Generator[dict[str, str] , None, None]:
         select_stmt = textwrap.dedent(
             """
             select *

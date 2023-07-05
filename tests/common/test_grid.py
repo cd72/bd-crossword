@@ -46,13 +46,9 @@ def test_can_write_down_fail(crossword_grid):
     assert crossword_grid.can_write_down(0, 1, 'SCATE') == False
 
 
-def test_can_write_down_fail(crossword_grid):
+def test_can_write_down_fail2(crossword_grid):
     crossword_grid.write_across(1, 0, 'SNAKE')
     assert crossword_grid.can_write_down(0, 1, 'SNAKE') == True
-
-def test_can_write_down_fail(crossword_grid):
-    crossword_grid.write_across(1, 0, 'SNAKE')
-    assert crossword_grid.write_down(0, 1, 'SNAKE') == True
 
 
 def test_fill_squares(crossword_grid):

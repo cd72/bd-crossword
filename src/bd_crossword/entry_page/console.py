@@ -8,9 +8,7 @@ from . import entry_page_getter
 from . import entry_page_parser
 import logging
 
-# import requests
-
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 log_cli_format = (
     "%(asctime)s.%(msecs)03d [%(filename)20s:%(lineno)04d]"

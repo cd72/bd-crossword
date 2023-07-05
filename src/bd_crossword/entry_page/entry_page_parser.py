@@ -76,7 +76,7 @@ def log_first_lines(html) -> None:
     logger.debug("<<<<<------- first_lines end")
     logger.debug("=====================================")
 
-def generate_clue(reg_match: re.match) -> CrosswordClue:
+def generate_clue(reg_match: re.Match) -> CrosswordClue:
     result = CrosswordClue(
         clue_id=int(reg_match["index_num"]),
         direction=reg_match["direction"],
@@ -98,7 +98,7 @@ def generate_clue(reg_match: re.match) -> CrosswordClue:
     return result
 
 
-def parse_basic_clues(html: str) -> dict:
+def parse_basic_clues(html: str) -> CrosswordClues:
     log_first_lines(html)
 
 
@@ -122,9 +122,8 @@ def get_start_letters(string: str) -> str:
     # logger.debug(f"{string=}")
     words = string.replace("-", " ").split(" ")
     # logger.debug(f"{words=}")
-    start_letters = [word[0] for word in words]
-    start_letters = ",".join(start_letters)
-    return start_letters
+    start_letters_list = [word[0] for word in words]
+    return ",".join(start_letters_list)
 
 def enrich_clues(crossword_clues: CrosswordClues) -> CrosswordClues:
     for direction in ("across", "down"):
@@ -137,7 +136,7 @@ def enrich_clues(crossword_clues: CrosswordClues) -> CrosswordClues:
 
     return crossword_clues
 
-def parse_entry_page(html: str) -> dict:
+def parse_entry_page(html: str) -> CrosswordClues:
     html = entry_page_fix_up.fix_up_html_03(html)
     crossword_clues = parse_basic_clues(html)
     crossword_clues = enrich_clues(crossword_clues)
