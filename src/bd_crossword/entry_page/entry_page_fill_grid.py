@@ -1,6 +1,5 @@
 from bd_crossword.common.crossword_grid import CrosswordGrid
 from bd_crossword.common.crossword_clues import CrosswordClue
-
 import logging
 import queue
 
@@ -69,7 +68,7 @@ class FillGrid:
 
 
 
-    def fill_clue(self):
+    def fill_clue(self) -> 'FillGrid':
         head_clue: CrosswordClue = self.clues.pop_head_clue()
         tail_clue: CrosswordClue | None = self.clues.pop_tail_clue(head_clue.direction, head_clue.actual_solution_length)
 
@@ -79,7 +78,7 @@ class FillGrid:
             self.try_filling_at_pos(head_clue, tail_clue)
 
             if self.succeded() or self.has_failed():
-                return
+                return self
 
             self.move_to_next_square()
             r, c = self.head_row, self.head_col

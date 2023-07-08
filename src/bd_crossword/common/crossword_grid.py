@@ -144,7 +144,7 @@ class CrosswordGrid:
         if self.is_valid_position(row, col):
             self.grid[row][col] = CrosswordGrid.FILL
 
-    def write_across(self, row, col, word, clue_id):
+    def write_across(self, row:int, col:int, word:str, clue_id:int):
         self.clue_ids[row][col] = clue_id
         if self.can_write_across(row, col, word, clue_id) == False:
             return False
@@ -160,7 +160,7 @@ class CrosswordGrid:
 
         return True
 
-    def write_down(self, row, col, word, clue_id):
+    def write_down(self, row:int, col:int, word:str, clue_id:int):
         self.clue_ids[row][col] = clue_id
         if self.can_write_down(row, col, word, clue_id) == False:
             return False
