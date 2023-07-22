@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 #     assert fix_up_html(html) == """<span class="spoiler"> PANCETTA</span>"""
 
 
-glob_string = "DT30*.html"
+glob_string = "DT301*.html"
 
 
 def html_files():

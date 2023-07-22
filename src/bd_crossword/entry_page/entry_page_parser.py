@@ -42,9 +42,9 @@ re_clues = re.compile(
                 (?P<listed_solution_length>\([0-9,-]+\))    # In brackets we get the word(s) lengths 
                 \n
                 \<spoiler\>
-                    \ ? 
+                    \ ?
                     (?P<listed_solution>.+?)  
-                    \ ? 
+                    \s *
                 \<\/spoiler\>
                 [:;\.\-]?
                 \ *

@@ -70,6 +70,7 @@ class FillGrid:
 
     def fill_clue(self) -> 'FillGrid':
         head_clue: CrosswordClue = self.clues.pop_head_clue()
+        logger.debug("fill_clue called with head_clue %s, looking for tail_clue with direction %s length %d", head_clue.actual_solution, head_clue.direction, head_clue.actual_solution_length)
         tail_clue: CrosswordClue | None = self.clues.pop_tail_clue(head_clue.direction, head_clue.actual_solution_length)
 
         for try_num in range(35):
